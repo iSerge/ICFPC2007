@@ -1,0 +1,84 @@
+name: DNAProcessor
+version: 0.0.1
+cabal-version: -any
+build-type: Simple
+license: AllRightsReserved
+license-file: ""
+copyright:
+maintainer:
+build-depends: array -any, array -any, array -any, array -any,
+               base -any, base -any, base -any, base -any, bytestring -any,
+               bytestring -any, bytestring -any, bytestring -any, containers -any,
+               containers -any, containers -any, containers -any, mtl -any,
+               mtl -any, mtl -any, mtl -any
+stability:
+homepage:
+package-url:
+bug-reports:
+synopsis:
+description: .
+category:
+author:
+tested-with: GHC ==0 GHC -any
+data-files:
+data-dir: ""
+extra-source-files:
+extra-tmp-files:
+ 
+executable: DNAProcessor
+main-is: Main.hs
+buildable: True
+build-tools:
+cpp-options:
+cc-options:
+ld-options:
+pkgconfig-depends:
+frameworks:
+c-sources:
+default-language:
+other-languages:
+default-extensions:
+other-extensions:
+extensions:
+extra-libraries:
+extra-lib-dirs:
+includes:
+install-includes:
+include-dirs:
+hs-source-dirs: src
+other-modules: DNAProcessor DNASeq ProcessorState DNA DNAByteStr
+ghc-prof-options: -O2 -prof -auto-all -rtsopts
+ghc-shared-options:
+ghc-options: -O2
+hugs-options:
+nhc98-options:
+jhc-options:
+ 
+executable: testDNAproc
+main-is: Test.hs
+buildable: True
+build-tools:
+cpp-options:
+cc-options:
+ld-options:
+pkgconfig-depends:
+frameworks:
+c-sources:
+default-language:
+other-languages:
+default-extensions:
+other-extensions:
+extensions:
+extra-libraries:
+extra-lib-dirs:
+includes:
+install-includes:
+include-dirs:
+hs-source-dirs: src
+other-modules: DNAProcessor DNASeq ProcessorState DNA DNAByteStr
+ghc-prof-options: -O2 -prof -auto-all -rtsopts
+ghc-shared-options:
+ghc-options: -O2
+hugs-options:
+nhc98-options:
+jhc-options:
