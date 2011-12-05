@@ -1,5 +1,3 @@
-{-# LANGUAGE BangPatterns #-}
-
 module DNAProcessor where
 
 import Prelude hiding (drop, reverse, length)
@@ -16,6 +14,7 @@ import System.IO
 import System.IO.Unsafe
 
 type Environment = S.Seq DNA
+
 
 nat :: StateT ProcVars IO Integer
 nat = do s <- get
@@ -34,6 +33,9 @@ nat = do s <- get
                  n <- nat
                  return (2 * n)
              else error "nat - finish()"
+
+--nat :: DNA -> (Integer , DNA)
+--nat dna |
 
 consts :: StateT ProcVars IO DNA
 consts = do s <- get
@@ -73,17 +75,19 @@ quoteIter dna r | isPrefix dnaI dna = quoteIter (sectFrom 1 dna) (r |> dnaC)
                 | isPrefix dnaC dna = quoteIter (sectFrom 1 dna) (r |> dnaF)
                 | isPrefix dnaF dna = quoteIter (sectFrom 1 dna) (r |> dnaP)
                 | isPrefix dnaP dna = quoteIter (sectFrom 1 dna) (r >< dnaIC)
-                | otherwise = r
+                | otherwise         = r
 
 protect :: Integer -> DNA -> DNA
 protect 0 x = defrag x
 protect n x = protect (n - 1) $ quote x
 
 asnat :: Integer -> DNA
-asnat 0 = dnaP
-asnat x = if even x
-    then dnaI <| asnat (x `div` 2)
-    else dnaC <| asnat (x `div` 2)
+asnat i = asnatIter i empty
+
+asnatIter 0 dna = dna |> dnaP
+asnatIter i dna = if even i
+    then asnatIter (i  `div` 2) (dna |> dnaI)
+    else  asnatIter (i  `div` 2) (dna |> dnaC)
 
 pattern :: Pattern -> Integer -> StateT ProcVars IO Pattern
 pattern p l = do
@@ -177,7 +181,7 @@ template t = do
 type MatcherSt = Maybe (Integer, Environment, S.Seq Integer)
 
 matchreplace :: Pattern -> Template -> StateT ProcVars IO ()
-matchreplace !p !t = do
+matchreplace p t = do
   s <- get
   let d = dna s in
     case F.foldl' (matchMapper (d, len d)) (Just (0, S.empty, S.empty)) p of
@@ -226,22 +230,9 @@ addCost :: Integer -> StateT ProcVars IO ()
 addCost n = do s <- get
                put s{cost = cost s + n}
 
-
-readDNA :: String -> StateT ProcVars IO ()
-readDNA f = do s <- get
-               str <- io $ readFile f
-               put (s{ dna = fromString str })
-
-finish :: String -> StateT ProcVars IO Bool
-finish e = do s <- get
-              put s{fin = True}
-              io $ putStr e
-              return True
-
 storeRNA :: StateT ProcVars IO ()
 storeRNA = do s <- get
               io $ putStr $ dna2String (sect 3 10 (dna s))
-              --put s{rna = (rna s) S.|> sect 0 7 (dna s)}
               consumeDNA 10
 
 --trace :: (Show a) => a -> StateT ProcVars IO ()
@@ -266,10 +257,10 @@ addDNAPrefix p = do
   s <- get
   put s{dna = fromString p >< dna s}
 
-exec :: String -> FilePath -> StateT ProcVars IO ()
-exec p f= do
-  readDNA f
-  addDNAPrefix p
+exec :: String -> StateT ProcVars IO ()
+exec dna = do
+  s<- get
+  put s{dna = fromString dna}
   execIter
 
 execIter = do

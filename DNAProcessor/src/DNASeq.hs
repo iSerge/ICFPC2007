@@ -1,4 +1,4 @@
-{-# LANGUAGE FlexibleInstances, TypeSynonymInstances, BangPatterns #-}
+{-# LANGUAGE FlexibleInstances, TypeSynonymInstances, MultiParamTypeClasses #-}
 
 module DNASeq where
 
@@ -34,15 +34,15 @@ data RNAOp = RNAOp Base Base Base Base Base Base Base deriving (Eq, Ord)
 toDNA :: String -> DNA
 toDNA = F.foldl' (flip $ flip (S.|>) . char2Base) empty
 
-instance DNAClass DNA where
+instance DNAClass DNA Base where
   fromString = toDNA
   sect m n = sectS (fromInteger m) (fromInteger n)
   sectFrom n = sectFromS (fromInteger n)
   sectN n = sectNS (fromInteger n)
   len = lenS
-  (<|) a = (S.<|) (S.index a 0)
+  (<|) a = (S.<|) a
   (><) = (S.><)
-  (|>) a b = (S.|>) a (S.index b 0)
+  (|>) a b = (S.|>) a b
   empty = S.empty
   isPrefix = isPrefixSq
   search = fastSearchS
@@ -53,7 +53,7 @@ sectS m n = S.take (n - m) . S.drop m
 sectFromS = S.drop
 
 sectNS :: Int -> DNA -> DNA
-sectNS i d = S.singleton (S.index d i)  --S.take 1 . (S.drop n)
+sectNS i d = S.index d i
 
 lenS :: DNA -> Integer
 lenS a = toInteger $ S.length a
@@ -61,13 +61,27 @@ lenS a = toInteger $ S.length a
 singleton :: Base -> DNA
 singleton = S.singleton
 
+failureFunc :: DNA -> Int -> Int
+failureFunc d = f
+ where
+  f t = case t of
+    0 -> 0
+    _ -> dna_iter d (f (t - 1)) (S.length d) t
+      where dna_iter d t n i = if i < n
+                                    then if t > 0 && (S.index d i /= S.index d t)
+                                      then dna_iter d (f (t - 1)) n i
+                                      else if S.index d i == S.index d t
+                                        then t + 1
+                                        else 0
+                                    else 0
+
 fastSearchS :: DNA -> DNA -> Maybe Integer
-fastSearchS a b = fastSearchIterS a b aLen bLen (array (0, aLen - 1) [(i, fromInteger $ failureFunc a $ toInteger i) | i <- [0..aLen - 1]]) 0 0
+fastSearchS a b = fastSearchIterS a b aLen bLen (array (0, aLen - 1) [(i, failureFunc a i) | i <- [0..aLen - 1]]) 0 0
     where aLen = S.length a
           bLen = S.length b
 
 fastSearchFromS :: Int -> DNA -> DNA -> Maybe Integer
-fastSearchFromS !start !a !b = fastSearchIterS a (S.drop start b) aLen bLen (array (0, aLen - 1) [(i, fromInteger $ failureFunc a $ toInteger i) | i <- [0..aLen - 1]]) start 0
+fastSearchFromS start a b = fastSearchIterS a (S.drop start b) aLen bLen (array (0, aLen - 1) [(i, failureFunc a i) | i <- [0..aLen - 1]]) start 0
     where aLen = S.length a
           bLen = S.length b
 
