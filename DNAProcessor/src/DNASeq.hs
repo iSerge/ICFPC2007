@@ -2,12 +2,9 @@
 
 module DNASeq where
 
-import DNA
---import Prelude hiding (drop, take, length, foldr, foldl)
 import qualified Data.Sequence as S
 import qualified Data.Foldable as F
 import Data.Array.IArray
---import Debug.Trace
 
 data Base = I | C | F | P deriving (Eq, Ord, Show)
 baseI = I
@@ -22,10 +19,10 @@ dnaP = singleton baseP
 dnaIC = singleton baseI S.|> baseC
 dnaIP = singleton baseI S.|> baseP
 dnaIF = singleton baseI S.|> baseF
-dnaIIC = singleton baseI S.|> baseI S.|> baseC
-dnaIIP = singleton baseI S.|> baseI S.|> baseP
-dnaIIF = singleton baseI S.|> baseI S.|> baseF
-dnaIII = singleton baseI S.|> baseI S.|> baseI
+dnaIIC = dnaI S.|> baseI S.|> baseC
+dnaIIP = dnaI S.|> baseI S.|> baseP
+dnaIIF = dnaI S.|> baseI S.|> baseF
+dnaIII = dnaI S.|> baseI S.|> baseI
 
 type DNA = S.Seq Base
 
@@ -33,26 +30,35 @@ data RNAOp = RNAOp Base Base Base Base Base Base Base deriving (Eq, Ord)
 
 toDNA :: String -> DNA
 toDNA = F.foldl' (flip $ flip (S.|>) . char2Base) empty
+--toDNA = F.foldl (flip $ flip (S.|>) . char2Base) empty
 
-instance DNAClass DNA Base where
-  fromString = toDNA
-  sect m n = sectS (fromInteger m) (fromInteger n)
-  sectFrom n = sectFromS (fromInteger n)
-  sectN n = sectNS (fromInteger n)
-  len = lenS
-  (<|) a = (S.<|) a
-  (><) = (S.><)
-  (|>) a b = (S.|>) a b
-  empty = S.empty
-  isPrefix = isPrefixSq
-  search = fastSearchS
-  searchFrom i = fastSearchFromS $ fromInteger i
-  defrag = id
+infixr 5 ><
+infixr 5 <|
+infixl 5 |>
+
+fromString = toDNA
+sect m n = sectS (fromInteger m) (fromInteger n)
+sectFrom n = sectFromS (fromInteger n)
+sectN n = sectNS (fromInteger n)
+len = lenS
+(<|) :: Base -> DNA -> DNA
+(<|) = (S.<|)
+(><) :: DNA -> DNA -> DNA
+(><) = (S.><)
+(|>) :: DNA -> Base -> DNA
+(|>) = (S.|>)
+empty = S.empty
+isPrefix = isPrefixSq
+search = fastSearchS
+searchFrom i = fastSearchFromS $ fromInteger i
+
+
+defrag = id
 
 sectS m n = S.take (n - m) . S.drop m
 sectFromS = S.drop
 
-sectNS :: Int -> DNA -> DNA
+sectNS :: Int -> DNA -> Base
 sectNS i d = S.index d i
 
 lenS :: DNA -> Integer
@@ -136,6 +142,15 @@ char2Base 'I' = I
 char2Base 'C' = C
 char2Base 'F' = F
 char2Base 'P' = P
+
+quote :: DNA -> DNA
+quote = F.foldl' qFolder empty
+
+qFolder :: DNA -> Base -> DNA
+qFolder dna I = dna |> baseC
+qFolder dna C = dna |> baseF
+qFolder dna F = dna |> baseP
+qFolder dna P = dna >< dnaIC
 
 dna2String :: DNA -> String
 dna2String = F.foldl' (\a b -> a ++ [base2Char b]) ""

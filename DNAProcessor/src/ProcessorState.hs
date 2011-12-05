@@ -1,6 +1,5 @@
 module ProcessorState where
 
-import DNA
 import DNASeq
 --import DNAByteStr
 import qualified Data.Sequence as S

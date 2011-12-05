@@ -1,6 +1,5 @@
 module Main where
 
-import DNA
 import DNASeq
 --import DNAByteStr
 import DNAProcessor
@@ -34,6 +33,19 @@ test = do
   testPattern "IIPIPCCCPIPCPIIFIIPIFFCFPIIFIIFIIPCPIIPPICFPICFPPPPPICFF" (S.fromList [LParen, Skip 7, Skip 1, RParen,LParen, Search (fromString "ICF"), RParen])
   testTemplate "IIPCPIIPPIIFICFPICFPPPPPICFF" (S.fromList [LengthOf 1, LengthOf 0])
   testMatchreplace "IIPIPCCCPIPCPIIFIIPIFFCFPIIFIIFIIPCPIIPPIIFICFPICFPPPPPICFF" (fromString "CCCPIIICPF")
+  putStr "Testing pure processing:\n"
+  putStr "  Testing pattern()\n"
+  testPatternR "IIPIFFCPICICIICPIICCFP" (S.fromList [LParen, Search (fromString "IFPP"), RParen, Pi baseF]) --"(?[IFPP])F"
+  testPatternR "IIPIPCCCIIFFIPIICIIPCFPICIIFIICCC" (S.fromList [LParen, Skip 7, RParen, LParen, Pi baseI, Pi baseC, Pi baseF, Pi baseP, RParen]) --"(!7)(ICFP)"
+  testPatternR "IIPIFCCPICICIICPIIPCFIIFIICIPIFPIFPICCFPICIIPCPIIFCCCIFPPFICFP" (S.fromList [LParen, Search (fromString "IFPP"), RParen, Pi baseF ,LParen, Pi baseI, Pi baseC, RParen]) --"(!7)(ICFP)"
+  putStr "Testing matchreplace:\n"
+  testMatchreplaceR "IIPIFICPICICIICPIICIFIFPIFPICIICCCCIFPPFICFP" (fromString "CCCIFPPPICFP")
+  testMatchreplaceR "IIPIFCCPICICIICPIICIPIFPIFPICIIFCCCIFPPFICFP" (fromString "CCCIFPPPICFP")
+  testMatchreplaceR "IIPIFPCPICICIICPIIPCFIIFIICIPIFPIFPICCFPICIIPCPIIFCCCIFPPFICFP" (fromString "CCCIFPPPICFPICPFP")
+  testPatternR "IIPIPCCCPIPCPIIFIIPIFFCFPIIFIIFIIPCPIIPPICFPICFPPPPPICFF" (S.fromList [LParen, Skip 7, Skip 1, RParen,LParen, Search (fromString "ICF"), RParen])
+  testTemplateR "IIPCPIIPPIIFICFPICFPPPPPICFF" (S.fromList [LengthOf 1, LengthOf 0])
+  testMatchreplaceR "IIPIPCCCPIPCPIIFIIPIFFCFPIIFIIFIIPCPIIPPIIFICFPICFPPPPPICFF" (fromString "CCCPIIICPF")
+
 
 --run_test :: (Eq a, Show a) => (String -> StateT ProcVars IO (a, ProcVars)) -> String -> a -> IO ()
 --run_test f s r = do
@@ -51,6 +63,15 @@ testPattern s r = do
     then putStr (pat2String p ++ " - OK, DNA: \"" ++ dna2String (dna st) ++ "\"\n")
     else putStr (pat2String p ++ " - FAIL, DNA: \"" ++ dna2String (dna st) ++ "\"\n")
 
+testPatternR :: String -> Pattern -> IO ()
+testPatternR s r = do
+  putStr ("    pattern " ++ s ++ " -> " ++ pat2String r ++ ", got: ")
+  (dna', p) <- patternR (fromString s)
+  if p == r
+        then putStr (pat2String p ++ " - OK, DNA: \"" ++ dna2String dna' ++ "\"\n")
+        else putStr (pat2String p ++ " - FAIL, DNA: \"" ++ dna2String dna' ++ "\"\n")
+
+
 runPattern :: String -> StateT ProcVars IO (Pattern, ProcVars)
 runPattern s = do
   addDNAPrefix s
@@ -66,12 +87,31 @@ testTemplate s r = do
     then putStr (tpl2String p ++ " - OK, DNA: \"" ++ dna2String (dna st) ++ "\"\n")
     else putStr (tpl2String p ++ " - FAIL, DNA: \"" ++ dna2String (dna st) ++ "\"\n")
 
+testTemplateR :: String -> Template -> IO ()
+testTemplateR s r = do
+  putStr ("    template " ++ s ++ " -> " ++ tpl2String r ++ ", got: ")
+  (dna', t) <- templateR (fromString s)
+  if t == r
+        then putStr (tpl2String t ++ " - OK, DNA: \"" ++ dna2String dna' ++ "\"\n")
+        else putStr (tpl2String t ++ " - FAIL, DNA: \"" ++ dna2String dna' ++ "\"\n")
+
+
 runTemplate :: String -> StateT ProcVars IO (Template, ProcVars)
 runTemplate s = do
   addDNAPrefix s
   p <- template S.empty
   s <- get
   return (p, s)
+
+testMatchreplaceR :: String -> DNA -> IO ()
+testMatchreplaceR s r = do
+  putStr ("    pattern " ++ s ++ " -> " ++ dna2String r ++ ", got: ")
+  (dna', p)  <- patternR (fromString s)
+  (dna'', t) <- templateR dna'
+  dna'''     <- matchreplaceR p t dna''
+  if dna''' == r
+        then putStr (dna2String dna''' ++ " - OK\n")
+        else putStr (dna2String dna''' ++ " - FAIL\n")
 
 testMatchreplace :: String -> DNA -> IO ()
 testMatchreplace s r = do
@@ -98,7 +138,7 @@ testSearch a b r = do
     else putStr (show s ++ " - FAIL\n")
   where s = search a b
 
-testFailfn :: DNA -> [Integer] -> IO ()
+testFailfn :: DNA -> [Int] -> IO ()
 testFailfn d r = do
   putStr ("    Fail function of " ++ dna2String d ++ " is ")
   if s == r
@@ -106,10 +146,10 @@ testFailfn d r = do
     else putStr (show s ++ " - FAIL\n")
   where s = runFf d $ failureFunc d
 
-runFf :: DNA -> (Integer -> Integer) -> [Integer]
+runFf :: DNA -> (Int -> Int) -> [Int]
 runFf d f = runFfIter f 0 (fromInteger  $len d) []
 
-runFfIter :: (Integer -> Integer) -> Integer -> Integer -> [Integer] -> [Integer]
+runFfIter :: (Int -> Int) -> Int -> Int -> [Int] -> [Int]
 runFfIter f i 0 r = reverse r
 runFfIter f i n r = runFfIter f (i + 1) (n - 1) (f i : r)
 
