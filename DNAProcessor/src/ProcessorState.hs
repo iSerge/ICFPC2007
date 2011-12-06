@@ -1,7 +1,6 @@
 module ProcessorState where
 
-import DNASeq
---import DNAByteStr
+import DNA
 import qualified Data.Sequence as S
 import Control.Monad
 import Control.Monad.State
@@ -37,43 +36,3 @@ tpl2String= F.foldl' (flip $ flip (++) . tItem2String) ""
 tItem2String (Ti b)          = [base2Char b]
 tItem2String (Protected n l) = "[" ++ show n ++ "^" ++ show l ++ "]"
 tItem2String (LengthOf n)    = "|" ++ show n ++ "|"
-
-data ProcVars = ProcVars {
-    dna :: DNA,
-    cost :: !Integer,
-    iteration :: !Integer
-  } deriving (Show)
-
-initVars = ProcVars empty 0 0
-
-newtype St s a = St { runSt :: s -> (a, s) }
-
-instance Functor (St s) where
-  fmap f m = St $ \s -> let
-                (a, s') = runSt m s
-                in (f a, s')
-
-instance Monad(St s) where
-  return = returnSt
-  (>>=) = bindSt
-
-instance MonadFix (St s) where
-  mfix f = St $ \s -> let (a, s') = runSt (f a) s in (a, s')
-
-instance Show( St s a) where
-  show = showSt
-
-showSt :: St s a -> String
-showSt s = "St instance"
-
-returnSt :: a -> St s a
-returnSt a = St $ \s -> (a, s)
-
-bindSt :: St s a -> (a -> St s b) -> St s b
-bindSt m k = St $ \s -> let (a, s') = runSt m s in runSt (k a) s'
-
-getSt :: St s s
-getSt = St $ \s -> (s, s)
-
-putSt :: s -> St s ()
-putSt s = St $ \_ -> ((), s)

@@ -29,7 +29,7 @@ type DNA = S.Seq Base
 data RNAOp = RNAOp Base Base Base Base Base Base Base deriving (Eq, Ord)
 
 toDNA :: String -> DNA
-toDNA = F.foldl' (flip $ flip (S.|>) . char2Base) empty
+toDNA = S.fromList . map char2Base
 --toDNA = F.foldl (flip $ flip (S.|>) . char2Base) empty
 
 infixr 5 ><
@@ -37,6 +37,7 @@ infixr 5 <|
 infixl 5 |>
 
 fromString = toDNA
+sect :: Integer -> Integer -> DNA -> DNA
 sect m n = sectS (fromInteger m) (fromInteger n)
 sectFrom n = sectFromS (fromInteger n)
 sectN n = sectNS (fromInteger n)

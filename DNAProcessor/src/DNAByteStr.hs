@@ -1,6 +1,5 @@
 module DNAByteStr where
 
-import DNA
 import qualified Data.ByteString.Lazy.Char8 as B
 import Data.Array.IArray
 import Data.Int
@@ -32,23 +31,21 @@ base2Char a = a
 dna2String :: DNA -> String
 dna2String = B.unpack
 
-instance DNAClass B.ByteString where
-  (<|) a = B.cons (B.head a)
-  (|>) a b = B.snoc a (B.head b)
-  (><) = B.append
-  sect m n = sectBS (fromNum m) (fromNum n)
-  sectFrom n = sectFromBS (fromNum n)
-  sectN n = sectNBS (fromNum n)
-  isPrefix = B.isPrefixOf
-  len = lenBS
-  empty = B.empty
-  isEmpty = B.null
-  search = fastSearchBS
-  searchFrom = fastSearchFromBS
-
-  fromString = fromStringBS
-  defrag = B.copy
-  --defrag = id
+(<|) a = B.cons a
+(|>) a b = B.snoc a b
+(><) = B.append
+sect m n = sectBS (fromNum m) (fromNum n)
+sectFrom n = sectFromBS (fromNum n)
+sectN :: Integer -> DNA -> Base
+sectN n = flip B.index $ fromInteger n
+isPrefix = B.isPrefixOf
+len = lenBS
+empty = B.empty
+isEmpty = B.null
+search = fastSearchBS
+searchFrom = fastSearchFromBS
+fromString = fromStringBS
+defrag = B.copy
 
 singleton :: Base -> DNA
 singleton a = fromString [a]
@@ -67,13 +64,28 @@ lenBS = toInteger . B.length
 fromStringBS :: String -> DNA
 fromStringBS = B.pack
 
+failureFunc :: DNA -> Int64 -> Int64
+failureFunc d = f
+ where
+  f t = case t of
+    0 -> 0
+    _ -> dna_iter d (f (t - 1)) (B.length d) t
+      where dna_iter d t n i = if i < n
+                                    then if t > 0 && (B.index d i /= B.index d t)
+                                      then dna_iter d (f (t - 1)) n i
+                                      else if B.index d i == B.index d t
+                                        then t + 1
+                                        else 0
+                                    else 0
+
+
 fastSearchBS :: DNA -> DNA -> Maybe Integer
-fastSearchBS a b = fastSearchIterBS2 a b aLen bLen (array (0, aLen - 1) [(i, fromInteger $ failureFunc a $ toInteger i) | i <- [0..aLen - 1]]) 0 0
+fastSearchBS a b = fastSearchIterBS2 a b aLen bLen (array (0, aLen - 1) [(i, failureFunc a i) | i <- [0..aLen - 1]]) 0 0
     where aLen = B.length a
           bLen = B.length b
 
 fastSearchFromBS :: Integer -> DNA -> DNA -> Maybe Integer
-fastSearchFromBS start a b = fastSearchIterBS2 a b aLen bLen (array (0, aLen - 1) [(i, fromInteger $ failureFunc a $ toInteger i) | i <- [0..aLen - 1]]) (fromInteger start) 0
+fastSearchFromBS start a b = fastSearchIterBS2 a b aLen bLen (array (0, aLen - 1) [(i, failureFunc a i) | i <- [0..aLen - 1]]) (fromInteger start) 0
     where aLen = B.length a
           bLen = B.length b
 
@@ -92,3 +104,12 @@ fastSearchIterBS2 r d rlen dlen ff i s = fsi i s
                                else if ss > 0 && (B.index d ii /= B.index r ss) then fsi ii (ff ! (ss-1))
                                       else if B.index d ii == B.index r ss then fsi (ii + 1) (ss + 1)
                                                                           else fsi (ii + 1) ss
+
+quote :: DNA -> DNA
+quote = B.foldl' qFolder empty
+
+qFolder :: DNA -> Base -> DNA
+qFolder dna 'I' = dna |> baseC
+qFolder dna 'C' = dna |> baseF
+qFolder dna 'F' = dna |> baseP
+qFolder dna 'P' = dna >< dnaIC

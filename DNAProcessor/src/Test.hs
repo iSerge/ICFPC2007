@@ -1,7 +1,6 @@
 module Main where
 
-import DNASeq
---import DNAByteStr
+import DNA
 import DNAProcessor
 import Control.Monad.State
 import ProcessorState
@@ -33,102 +32,33 @@ test = do
   testPattern "IIPIPCCCPIPCPIIFIIPIFFCFPIIFIIFIIPCPIIPPICFPICFPPPPPICFF" (S.fromList [LParen, Skip 7, Skip 1, RParen,LParen, Search (fromString "ICF"), RParen])
   testTemplate "IIPCPIIPPIIFICFPICFPPPPPICFF" (S.fromList [LengthOf 1, LengthOf 0])
   testMatchreplace "IIPIPCCCPIPCPIIFIIPIFFCFPIIFIIFIIPCPIIPPIIFICFPICFPPPPPICFF" (fromString "CCCPIIICPF")
-  putStr "Testing pure processing:\n"
-  putStr "  Testing pattern()\n"
-  testPatternR "IIPIFFCPICICIICPIICCFP" (S.fromList [LParen, Search (fromString "IFPP"), RParen, Pi baseF]) --"(?[IFPP])F"
-  testPatternR "IIPIPCCCIIFFIPIICIIPCFPICIIFIICCC" (S.fromList [LParen, Skip 7, RParen, LParen, Pi baseI, Pi baseC, Pi baseF, Pi baseP, RParen]) --"(!7)(ICFP)"
-  testPatternR "IIPIFCCPICICIICPIIPCFIIFIICIPIFPIFPICCFPICIIPCPIIFCCCIFPPFICFP" (S.fromList [LParen, Search (fromString "IFPP"), RParen, Pi baseF ,LParen, Pi baseI, Pi baseC, RParen]) --"(!7)(ICFP)"
-  putStr "Testing matchreplace:\n"
-  testMatchreplaceR "IIPIFICPICICIICPIICIFIFPIFPICIICCCCIFPPFICFP" (fromString "CCCIFPPPICFP")
-  testMatchreplaceR "IIPIFCCPICICIICPIICIPIFPIFPICIIFCCCIFPPFICFP" (fromString "CCCIFPPPICFP")
-  testMatchreplaceR "IIPIFPCPICICIICPIIPCFIIFIICIPIFPIFPICCFPICIIPCPIIFCCCIFPPFICFP" (fromString "CCCIFPPPICFPICPFP")
-  testPatternR "IIPIPCCCPIPCPIIFIIPIFFCFPIIFIIFIIPCPIIPPICFPICFPPPPPICFF" (S.fromList [LParen, Skip 7, Skip 1, RParen,LParen, Search (fromString "ICF"), RParen])
-  testTemplateR "IIPCPIIPPIIFICFPICFPPPPPICFF" (S.fromList [LengthOf 1, LengthOf 0])
-  testMatchreplaceR "IIPIPCCCPIPCPIIFIIPIFFCFPIIFIIFIIPCPIIPPIIFICFPICFPPPPPICFF" (fromString "CCCPIIICPF")
-
-
---run_test :: (Eq a, Show a) => (String -> StateT ProcVars IO (a, ProcVars)) -> String -> a -> IO ()
---run_test f s r = do
---  putStr ("    pattern " ++ s ++ " -> " ++ (show r) ++ ", got: ")
---  ((p, st), v) <- runStateT (run_pattern s) initVars
---  case p == r of
---    True -> putStr ((show p) ++ " - OK, DNA: \"" ++ (dna2String $ dna st) ++ "\"\n")
---    False -> putStr ((show p) ++ " - FAIL, DNA: \"" ++ (dna2String $ dna st) ++ "\"\n")
 
 testPattern :: String -> Pattern -> IO ()
 testPattern s r = do
   putStr ("    pattern " ++ s ++ " -> " ++ pat2String r ++ ", got: ")
-  ((p, st), v) <- runStateT (runPattern s) initVars
-  if p == r
-    then putStr (pat2String p ++ " - OK, DNA: \"" ++ dna2String (dna st) ++ "\"\n")
-    else putStr (pat2String p ++ " - FAIL, DNA: \"" ++ dna2String (dna st) ++ "\"\n")
-
-testPatternR :: String -> Pattern -> IO ()
-testPatternR s r = do
-  putStr ("    pattern " ++ s ++ " -> " ++ pat2String r ++ ", got: ")
-  (dna', p) <- patternR (fromString s)
+  (dna', p) <- pattern (fromString s)
   if p == r
         then putStr (pat2String p ++ " - OK, DNA: \"" ++ dna2String dna' ++ "\"\n")
         else putStr (pat2String p ++ " - FAIL, DNA: \"" ++ dna2String dna' ++ "\"\n")
 
-
-runPattern :: String -> StateT ProcVars IO (Pattern, ProcVars)
-runPattern s = do
-  addDNAPrefix s
-  p <- pattern S.empty 0
-  s <- get
-  return (p, s)
-
 testTemplate :: String -> Template -> IO ()
 testTemplate s r = do
   putStr ("    template " ++ s ++ " -> " ++ tpl2String r ++ ", got: ")
-  ((p, st), v) <- runStateT (runTemplate s) initVars
-  if p == r
-    then putStr (tpl2String p ++ " - OK, DNA: \"" ++ dna2String (dna st) ++ "\"\n")
-    else putStr (tpl2String p ++ " - FAIL, DNA: \"" ++ dna2String (dna st) ++ "\"\n")
-
-testTemplateR :: String -> Template -> IO ()
-testTemplateR s r = do
-  putStr ("    template " ++ s ++ " -> " ++ tpl2String r ++ ", got: ")
-  (dna', t) <- templateR (fromString s)
+  (dna', t) <- template (fromString s)
   if t == r
         then putStr (tpl2String t ++ " - OK, DNA: \"" ++ dna2String dna' ++ "\"\n")
         else putStr (tpl2String t ++ " - FAIL, DNA: \"" ++ dna2String dna' ++ "\"\n")
 
 
-runTemplate :: String -> StateT ProcVars IO (Template, ProcVars)
-runTemplate s = do
-  addDNAPrefix s
-  p <- template S.empty
-  s <- get
-  return (p, s)
-
-testMatchreplaceR :: String -> DNA -> IO ()
-testMatchreplaceR s r = do
-  putStr ("    pattern " ++ s ++ " -> " ++ dna2String r ++ ", got: ")
-  (dna', p)  <- patternR (fromString s)
-  (dna'', t) <- templateR dna'
-  dna'''     <- matchreplaceR p t dna''
-  if dna''' == r
-        then putStr (dna2String dna''' ++ " - OK\n")
-        else putStr (dna2String dna''' ++ " - FAIL\n")
-
 testMatchreplace :: String -> DNA -> IO ()
 testMatchreplace s r = do
   putStr ("    pattern " ++ s ++ " -> " ++ dna2String r ++ ", got: ")
-  (d, v) <- runStateT (runMatchreplace s) initVars
-  if d == r
-    then putStr (dna2String d ++ " - OK\n")
-    else putStr (dna2String d ++ " - FAIL\n")
-
-runMatchreplace :: String -> StateT ProcVars IO DNA
-runMatchreplace s = do
-  addDNAPrefix s
-  p <- pattern S.empty 0
-  t <- template S.empty
-  matchreplace p t
-  s <- get
-  return (dna s)
+  (dna', p)  <- pattern (fromString s)
+  (dna'', t) <- template dna'
+  dna'''     <- matchreplace p t dna''
+  if dna''' == r
+        then putStr (dna2String dna''' ++ " - OK\n")
+        else putStr (dna2String dna''' ++ " - FAIL\n")
 
 testSearch :: DNA -> DNA -> Maybe Integer -> IO ()
 testSearch a b r = do
@@ -138,7 +68,6 @@ testSearch a b r = do
     else putStr (show s ++ " - FAIL\n")
   where s = search a b
 
-testFailfn :: DNA -> [Int] -> IO ()
 testFailfn d r = do
   putStr ("    Fail function of " ++ dna2String d ++ " is ")
   if s == r
@@ -146,10 +75,8 @@ testFailfn d r = do
     else putStr (show s ++ " - FAIL\n")
   where s = runFf d $ failureFunc d
 
-runFf :: DNA -> (Int -> Int) -> [Int]
 runFf d f = runFfIter f 0 (fromInteger  $len d) []
 
-runFfIter :: (Int -> Int) -> Int -> Int -> [Int] -> [Int]
 runFfIter f i 0 r = reverse r
 runFfIter f i n r = runFfIter f (i + 1) (n - 1) (f i : r)
 

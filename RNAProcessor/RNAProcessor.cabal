@@ -51,7 +51,7 @@ hugs-options:
 nhc98-options:
 jhc-options:
  
-executable: Test
+executable: testRNAProcessor
 main-is: Test.hs
 buildable: True
 build-tools:

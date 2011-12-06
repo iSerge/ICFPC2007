@@ -1,4 +1,4 @@
-module Test () where
+module Main (main) where
 
 import Color
 import Data.Array.IO
