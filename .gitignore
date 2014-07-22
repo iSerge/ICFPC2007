@@ -1,0 +1,39 @@
+# Java class files
+*.class
+
+# built application files
+*.apk
+*.ap_
+
+# files for the dex VM
+*.dex
+
+# generated files
+bin/
+gen/
+out/
+build/
+.idea/libraries/
+
+# Local configuration file (sdk path, etc)
+local.properties
+
+# Mac OS X clutter
+*.DS_Store
+
+# Intellij Idea user specific project files
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/datasources.xml
+.idea/dataSources.ids
+
+# Maven
+log/
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.next
+release.properties
+
+# Gradle
+.gradle
