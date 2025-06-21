@@ -1,20 +1,11 @@
+cabal-version: 3.0
 name: DNAProcessor
 version: 0.0.1
-cabal-version: -any
 build-type: Simple
-license: AllRightsReserved
+license: BSD-3-Clause-Attribution
 license-file: ""
 copyright:
 maintainer:
-build-depends: array -any, array -any, array -any, array -any,
-               array -any, array -any, array -any, array -any, base -any,
-               base -any, base -any, base -any, base -any, base -any, base -any,
-               base -any, bytestring -any, bytestring -any, bytestring -any,
-               bytestring -any, bytestring -any, bytestring -any, bytestring -any,
-               bytestring -any, containers -any, containers -any, containers -any,
-               containers -any, containers -any, containers -any, containers -any,
-               containers -any, mtl -any, mtl -any, mtl -any, mtl -any, mtl -any,
-               mtl -any, mtl -any, mtl -any
 stability:
 homepage:
 package-url:
@@ -25,64 +16,62 @@ category:
 author:
 tested-with: GHC ==0 GHC -any
 data-files:
-data-dir: ""
+data-dir:
 extra-source-files:
 extra-tmp-files:
  
-executable: DNAProcessor
-main-is: Main.hs
-buildable: True
-build-tools:
-cpp-options:
-cc-options:
-ld-options:
-pkgconfig-depends:
-frameworks:
-c-sources:
-default-language:
-other-languages:
-default-extensions:
-other-extensions:
-extensions:
-extra-libraries:
-extra-lib-dirs:
-includes:
-install-includes:
-include-dirs:
-hs-source-dirs: src
-other-modules: ProcessorState DNASeq DNAProcessor DNAByteStr DNA
-ghc-prof-options: -O2 -prof -auto-all -rtsopts
-ghc-shared-options:
-ghc-options: -O2
-hugs-options:
-nhc98-options:
-jhc-options:
+executable DNAProcessor
+  main-is: Main.hs
+  buildable: True
+  build-depends: array -any, base -any, bytestring -any, containers -any, mtl -any
+  cpp-options:
+  cc-options:
+  ld-options:
+  pkgconfig-depends:
+  frameworks:
+  c-sources:
+  default-language: Haskell2010
+  other-languages:
+  default-extensions:
+  other-extensions:
+  extra-libraries:
+  extra-lib-dirs:
+  includes:
+  install-includes:
+  include-dirs:
+  hs-source-dirs: src
+  other-modules: ProcessorState DNASeq DNAProcessor DNAByteStr DNA
+  ghc-prof-options:
+  ghc-shared-options:
+  ghc-options: -O2
+  hugs-options:
+  nhc98-options:
+  jhc-options:
  
-executable: testDNAproc
-main-is: Test.hs
-buildable: True
-build-tools:
-cpp-options:
-cc-options:
-ld-options:
-pkgconfig-depends:
-frameworks:
-c-sources:
-default-language:
-other-languages:
-default-extensions:
-other-extensions:
-extensions:
-extra-libraries:
-extra-lib-dirs:
-includes:
-install-includes:
-include-dirs:
-hs-source-dirs: src
-other-modules: ProcessorState DNASeq DNAProcessor DNAByteStr DNA
-ghc-prof-options: -O2 -prof -auto-all -rtsopts
-ghc-shared-options:
-ghc-options: -O2
-hugs-options:
-nhc98-options:
-jhc-options:
+executable testDNAproc
+  main-is: Test.hs
+  buildable: True
+  build-depends: array -any, base -any, bytestring -any, containers -any, mtl -any
+  cpp-options:
+  cc-options:
+  ld-options:
+  pkgconfig-depends:
+  frameworks:
+  c-sources:
+  default-language: Haskell2010
+  other-languages:
+  default-extensions:
+  other-extensions:
+  extra-libraries:
+  extra-lib-dirs:
+  includes:
+  install-includes:
+  include-dirs:
+  hs-source-dirs: src
+  other-modules: ProcessorState DNASeq DNAProcessor DNAByteStr DNA
+  ghc-prof-options:
+  ghc-shared-options:
+  ghc-options: -O2
+  hugs-options:
+  nhc98-options:
+  jhc-options:
