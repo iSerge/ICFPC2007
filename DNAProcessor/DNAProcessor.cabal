@@ -7,9 +7,13 @@ license-file: ""
 copyright:
 maintainer:
 build-depends: array -any, array -any, array -any, array -any,
-               base -any, base -any, base -any, base -any, bytestring -any,
-               bytestring -any, bytestring -any, bytestring -any, containers -any,
-               containers -any, containers -any, containers -any, mtl -any,
+               array -any, array -any, array -any, array -any, base -any,
+               base -any, base -any, base -any, base -any, base -any, base -any,
+               base -any, bytestring -any, bytestring -any, bytestring -any,
+               bytestring -any, bytestring -any, bytestring -any, bytestring -any,
+               bytestring -any, containers -any, containers -any, containers -any,
+               containers -any, containers -any, containers -any, containers -any,
+               containers -any, mtl -any, mtl -any, mtl -any, mtl -any, mtl -any,
                mtl -any, mtl -any, mtl -any
 stability:
 homepage:
@@ -46,7 +50,7 @@ includes:
 install-includes:
 include-dirs:
 hs-source-dirs: src
-other-modules: DNAProcessor DNASeq ProcessorState DNA DNAByteStr
+other-modules: ProcessorState DNASeq DNAProcessor DNAByteStr DNA
 ghc-prof-options: -O2 -prof -auto-all -rtsopts
 ghc-shared-options:
 ghc-options: -O2
@@ -75,7 +79,7 @@ includes:
 install-includes:
 include-dirs:
 hs-source-dirs: src
-other-modules: DNAProcessor DNASeq ProcessorState DNA DNAByteStr
+other-modules: ProcessorState DNASeq DNAProcessor DNAByteStr DNA
 ghc-prof-options: -O2 -prof -auto-all -rtsopts
 ghc-shared-options:
 ghc-options: -O2

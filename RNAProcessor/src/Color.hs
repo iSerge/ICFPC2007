@@ -7,7 +7,7 @@ currentPixel, transparentBitmap, bitmapBounds, readPixel, writePixel
 import Data.Array.IO
 import Direction
 
-data Color = RGB Int Int Int | Transparency Int
+data Color = RGB !Int !Int !Int | Transparency !Int
                 deriving (Show)
 
 type Bucket = [Color]
@@ -29,10 +29,10 @@ opaque      = Transparency 255
 
 currentPixel:: Bucket -> Pixel
 currentPixel [] = (0, 0, 0, 255)
-currentPixel bucket = currentPixelIter bucket (black, 0, 0, 0)
+currentPixel bucket = currentPixelIter (black, 0, 0, 0) bucket
 
-currentPixelIter :: Bucket -> (Color, Int, Int, Int) -> Pixel
-currentPixelIter [] (RGB r g b, cn, a, an) = ((r `div` cn')*(a' `div` an') `div` 255,
+currentPixelIter :: (Color, Int, Int, Int) -> Bucket -> Pixel
+currentPixelIter (RGB r g b, cn, a, an) [] = ((r `div` cn')*(a' `div` an') `div` 255,
                                             (g `div` cn')*(a' `div` an') `div` 255,
                                             (b `div` cn')*(a' `div` an') `div` 255,
                                             a' `div` an')
@@ -40,9 +40,10 @@ currentPixelIter [] (RGB r g b, cn, a, an) = ((r `div` cn')*(a' `div` an') `div`
            an' = if an == 0 then 1 else an
            a'  = if an == 0 then 255 else a
 
-currentPixelIter (color:bucket) (RGB r g b, cn, a, an) = case color of
-  RGB r' g' b' -> currentPixelIter bucket (RGB (r+r') (g+g') (b+b'), cn + 1, a, an)
-  Transparency a'  -> currentPixelIter bucket (RGB r g b, cn, a + a', an + 1)
+currentPixelIter (RGB r g b, cn, a, an) (RGB r' g' b':bucket) =
+   currentPixelIter (RGB (r+r') (g+g') (b+b'), cn + 1, a, an) bucket
+currentPixelIter (RGB r g b, cn, a, an) (Transparency a':bucket) =
+   currentPixelIter (RGB r g b, cn, a + a', an + 1) bucket
 
 bitmapBounds :: (Position, Position)
 bitmapBounds = ((0,0), (599,599))

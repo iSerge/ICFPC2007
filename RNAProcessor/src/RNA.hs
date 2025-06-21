@@ -47,13 +47,5 @@ parseRNA str = case strChunk of
     "PFFPCCP" -> Compose : parseRNA restStr
     "PFFICCF" -> Clip : parseRNA restStr
     _         -> OtherRNA : parseRNA restStr
-  where (strChunk, restStr) = chomp str 7
-
-
-chomp str n = chompIter str n []
-
-chompIter :: String -> Int -> String -> (String, String)
-chompIter []      n r = (reverse r, "")
-chompIter str     0 r = (reverse r, str)
-chompIter (s:str) n r = chompIter str (n - 1) (s:r)
-
+  where strChunk = take 7 str
+        restStr  = drop 7 str

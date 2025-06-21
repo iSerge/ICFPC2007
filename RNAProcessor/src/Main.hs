@@ -170,7 +170,7 @@ fillIter initial (p:ps) = do
         ps'''  = if x < 599 then (x+1, y):ps''  else ps''
         ps'''' = if x > 0   then (x-1, y):ps''' else ps'''
       setPixel p
-      return ps'''
+      return ps''''
     else return ps
   fillIter initial psN
 {-

@@ -115,7 +115,7 @@ exec = execIter 0 . fromString
 
 execIter i dna = do
     hSetBuffering stderr NoBuffering
-    hPutStrLn stderr ("iteration: " ++ show i)
+    when (i `mod` 1000 == 0) $ hPutStrLn stderr ("iteration: " ++ show i)
     (dna', p)  <- pattern dna
     --hPutStrLn stderr ("pattern: " ++ pat2String p)
     (dna'', t) <- template dna'

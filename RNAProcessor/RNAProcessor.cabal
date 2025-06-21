@@ -6,8 +6,9 @@ license: AllRightsReserved
 license-file: ""
 copyright:
 maintainer:
-build-depends: array -any, base -any, cairo -any, deepseq -any,
-               gtk -any, haskell98 -any, mtl -any
+build-depends: array -any, array -any, base -any, base -any,
+               cairo -any, cairo -any, deepseq -any, deepseq -any, gtk -any,
+               gtk -any, haskell98 -any, haskell98 -any, mtl -any, mtl -any
 stability:
 homepage:
 package-url:
@@ -43,10 +44,10 @@ includes:
 install-includes:
 include-dirs:
 hs-source-dirs: src
-other-modules: RNA Direction Test Color
+other-modules: RNA Direction Color
 ghc-prof-options:
 ghc-shared-options:
-ghc-options:
+ghc-options: -O2 -threaded
 hugs-options:
 nhc98-options:
 jhc-options:
@@ -72,7 +73,7 @@ includes:
 install-includes:
 include-dirs:
 hs-source-dirs: src
-other-modules: RNA Direction Test Color
+other-modules: RNA Direction Color
 ghc-prof-options:
 ghc-shared-options:
 ghc-options:
