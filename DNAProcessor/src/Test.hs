@@ -75,7 +75,7 @@ testFailfn d r = do
     else putStr (show s ++ " - FAIL\n")
   where s = runFf d $ failureFunc d
 
-runFf d f = runFfIter f 0 (fromInteger  $len d) []
+runFf d f = runFfIter f 0 (fromInteger $ len d) []
 
 runFfIter f i 0 r = reverse r
 runFfIter f i n r = runFfIter f (i + 1) (n - 1) (f i : r)
