@@ -2,9 +2,9 @@ module Main (main) where
 
 import Color
 import Data.Array.IO
-import IO
+import System.IO
 import Control.DeepSeq
-import Graphics.UI.Gtk --  hiding (fill)
+import Graphics.UI.Gtk hiding (rectangle)
 import Graphics.Rendering.Cairo
 
 main = do

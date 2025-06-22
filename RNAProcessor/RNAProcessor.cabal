@@ -1,14 +1,11 @@
+cabal-version: 3.0
 name: RNAProcessor
 version: 0.0.1
-cabal-version: -any
 build-type: Simple
-license: AllRightsReserved
+license: BSD-3-Clause-Attribution
 license-file: ""
 copyright:
 maintainer:
-build-depends: array -any, array -any, base -any, base -any,
-               cairo -any, cairo -any, deepseq -any, deepseq -any, gtk -any,
-               gtk -any, haskell98 -any, haskell98 -any, mtl -any, mtl -any
 stability:
 homepage:
 package-url:
@@ -19,64 +16,64 @@ category:
 author:
 tested-with:
 data-files:
-data-dir: ""
+data-dir:
 extra-source-files:
 extra-tmp-files:
  
-executable: RNAProcessor
-main-is: Main.hs
-buildable: True
-build-tools:
-cpp-options:
-cc-options:
-ld-options:
-pkgconfig-depends:
-frameworks:
-c-sources:
-default-language:
-other-languages:
-default-extensions:
-other-extensions:
-extensions:
-extra-libraries:
-extra-lib-dirs:
-includes:
-install-includes:
-include-dirs:
-hs-source-dirs: src
-other-modules: RNA Direction Color
-ghc-prof-options:
-ghc-shared-options:
-ghc-options: -O2 -threaded
-hugs-options:
-nhc98-options:
-jhc-options:
+executable RNAProcessor
+  main-is: Main.hs
+  buildable: True
+  build-depends: array -any, base -any, cairo -any, deepseq -any,
+               gtk -any, mtl -any
+  cpp-options:
+  cc-options:
+  ld-options:
+  pkgconfig-depends:
+  frameworks:
+  c-sources:
+  default-language: Haskell2010
+  other-languages:
+  default-extensions:
+  other-extensions:
+  extra-libraries:
+  extra-lib-dirs:
+  includes:
+  install-includes:
+  include-dirs:
+  hs-source-dirs: src
+  other-modules: RNA Direction Color
+  ghc-prof-options:
+  ghc-shared-options:
+  ghc-options: -O2 -threaded
+  hugs-options:
+  nhc98-options:
+  jhc-options:
  
-executable: testRNAProcessor
-main-is: Test.hs
-buildable: True
-build-tools:
-cpp-options:
-cc-options:
-ld-options:
-pkgconfig-depends:
-frameworks:
-c-sources:
-default-language:
-other-languages:
-default-extensions:
-other-extensions:
-extensions:
-extra-libraries:
-extra-lib-dirs:
-includes:
-install-includes:
-include-dirs:
-hs-source-dirs: src
-other-modules: RNA Direction Color
-ghc-prof-options:
-ghc-shared-options:
-ghc-options:
-hugs-options:
-nhc98-options:
-jhc-options:
+executable testRNAProcessor
+  main-is: Test.hs
+  buildable: True
+  build-depends: array -any, base -any, cairo -any, deepseq -any,
+               gtk -any, mtl -any
+  cpp-options:
+  cc-options:
+  ld-options:
+  pkgconfig-depends:
+  frameworks:
+  c-sources:
+  default-language: Haskell2010
+  other-languages:
+  default-extensions:
+  other-extensions:
+  extra-libraries:
+  extra-lib-dirs:
+  includes:
+  install-includes:
+  include-dirs:
+  hs-source-dirs: src
+  other-modules: RNA Direction Color
+  ghc-prof-options:
+  ghc-shared-options:
+  ghc-options:
+  hugs-options:
+  nhc98-options:
+  jhc-options:

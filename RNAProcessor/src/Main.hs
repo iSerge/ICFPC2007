@@ -24,7 +24,7 @@ import Control.DeepSeq
 import Data.Array.MArray
 import Data.Word
 import GHC.Float
-import System
+import System.Environment
 import System.IO
 import Color
 import RNA
@@ -258,7 +258,8 @@ getPixbuf b = do
   rowstride <- pixbufGetRowstride pbuf
   nChannels <- pixbufGetNChannels pbuf
   pixels    <- (pixbufGetPixels pbuf :: IO (PixbufData Int Word8))
-  let proc_i [] = return ()
+  let proc_i :: [(Int,Int)] -> IO ()
+      proc_i [] = return ()
       proc_i ((x,y):rng) = do
         (r, g, b, a) <- liftIO $ readPixel b (x,y)
         let p = y*rowstride + x*nChannels
