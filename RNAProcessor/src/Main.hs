@@ -113,19 +113,22 @@ setP bitmap pos pixel =
 
 getPixel :: Position -> StateT ProcState IO Pixel
 getPixel pos = do
-  s <- get
-  let b = head $ bitmaps s
-  pixel <- liftIO $ readPixel b pos
-  pixel `deepseq` return pixel
+  bb <- gets bitmaps
+  case bb of
+    (b:_) ->do
+      pixel <- liftIO $ readPixel b pos
+      pixel `deepseq` return pixel
+    _ -> return (0, 0, 0, 0)
 
 setPixel pos = do
   -- liftIO $ putStrLn ("setPixel " ++ show pos)
-  s <- get
-  p <- currentPixelS
-  let bb = bitmaps s
-      b = head bb
-  r <- liftIO $ writePixel b pos p
-  r `deepseq` return ()
+  bb <- gets bitmaps
+  case bb of
+    (b : _) -> do
+      p <- currentPixelS
+      r <- liftIO $ writePixel b pos p
+      r `deepseq` return ()
+    _ -> return ()
 
 draw = do
   s <- get
@@ -207,31 +210,12 @@ pixelTransform f b0 b1 pos = do
   r `deepseq` return ()
 
 bitmapProcess f = do
-  s <- get
-  when (length (bitmaps s) > 1) $
-    let bb = bitmaps s
-        b0 = head bb
-        b1 = head $ tail bb
-        {-
-        proc :: Position -> StateT ProcState IO ()
-        proc = \pos -> do
-               p0 <- liftIO $ readPixel b0 pos
-               p1 <- liftIO $ readPixel b1 pos
-               let newPix = f p0 p1
-               r  <- newPix `deepseq` liftIO $ writePixel b1 pos newPix
-               r `deepseq` return ()
-        -}
-        proc_i [] = return ()
-        proc_i (pos : rng) = do
-          p0 <- liftIO $ readPixel b0 pos
-          p1 <- liftIO $ readPixel b1 pos
-          let newPix = f p0 p1
-          r <- newPix `deepseq` liftIO $ writePixel b1 pos newPix
-          r `deepseq` proc_i rng
-     in do
-          mapM_ (pixelTransform f b0 b1) $ range bitmapBounds
-          -- proc_i $ range bitmapBounds
-          put s {bitmaps = drop 1 bb}
+  bb <- gets bitmaps
+  case bb of
+    (b0 : b1 : bs) -> do
+      mapM_ (pixelTransform f b0 b1) $ range bitmapBounds
+      modify' (\s -> s {bitmaps = b1 : bs})
+    _ -> return ()
 
 compose = bitmapProcess composeFunc
 
@@ -285,11 +269,10 @@ startRNAProc (file : files) = do
   rna <- liftIO $ readRNA file
   addBitmap
   processRNA rna
-  -- pixmap <- getPixbuf
-  -- liftIO $ savePixmap pixmap file
-  s <- get
-  let b = head $ bitmaps s
-  liftIO $ savePixmap b file
+  bb <- gets bitmaps
+  case bb of
+    (b : _) -> liftIO $ savePixmap b file
+    _ -> return ()
   startRNAProc files
 
 processRNA :: RNA -> StateT ProcState IO ()
