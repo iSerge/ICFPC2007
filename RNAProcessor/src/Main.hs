@@ -30,6 +30,8 @@ import RNA
 import System.Environment
 import System.IO
 
+printTrace = False
+
 data ProcState = ProcState
   { bucket :: !Bucket,
     currPix :: !Pixel,
@@ -115,13 +117,15 @@ getPixel :: Position -> StateT ProcState IO Pixel
 getPixel pos = do
   bb <- gets bitmaps
   case bb of
-    (b:_) ->do
+    (b : _) -> do
       pixel <- liftIO $ readPixel b pos
       pixel `deepseq` return pixel
     _ -> return (0, 0, 0, 0)
 
 setPixel pos = do
-  -- liftIO $ putStrLn ("setPixel " ++ show pos)
+  -- when printTrace $
+  --   liftIO $
+  --     putStrLn ("setPixel " ++ show pos)
   bb <- gets bitmaps
   case bb of
     (b : _) -> do
@@ -144,8 +148,9 @@ draw = do
         do
           setPixel (x `div` d, y `div` d)
           lineIter (x + deltax) (y + deltay) (i - 1)
-  -- liftIO $ putStrLn ("pos " ++ show (px, py))
-  -- liftIO $ putStrLn ("mark " ++ show (mx, my))
+  when printTrace $ do
+    liftIO $ putStrLn ("pos " ++ show (px, py))
+    liftIO $ putStrLn ("mark " ++ show (mx, my))
   lineIter x y d
   setPixel (mx, my)
 
@@ -281,48 +286,59 @@ processRNA (op : rna) = do
   --  printIteration
   case op of
     AddColor color -> do
-      --            liftIO $ putStrLn ("addColor: " ++ show color)
-      --            liftIO $ hFlush stdout
+      when printTrace $ do
+        liftIO $ putStrLn ("addColor: " ++ show color)
+        liftIO $ hFlush stdout
       addColor color
     EmptyBucket -> do
-      --            liftIO $ putStrLn "clearBucket"
-      --            liftIO $ hFlush stdout
+      when printTrace $ do
+        liftIO $ putStrLn "clearBucket"
+        liftIO $ hFlush stdout
       clearBucket
     Move -> do
-      --            liftIO $ putStrLn "move"
-      --            liftIO $ hFlush stdout
+      when printTrace $ do
+        liftIO $ putStrLn "move"
+        liftIO $ hFlush stdout
       move
     TurnCW -> do
-      --            liftIO $ putStrLn "turnCW"
-      --            liftIO $ hFlush stdout
+      when printTrace $ do
+        liftIO $ putStrLn "turnCW"
+        liftIO $ hFlush stdout
       turnCW
     TurnCCW -> do
-      --            liftIO $ putStrLn "turnCCW"
-      --            liftIO $ hFlush stdout
+      when printTrace $ do
+        liftIO $ putStrLn "turnCCW"
+        liftIO $ hFlush stdout
       turnCCW
     Mark -> do
-      --            liftIO $ putStrLn "setMark"
-      --            liftIO $ hFlush stdout
+      when printTrace $ do
+        liftIO $ putStrLn "setMark"
+        liftIO $ hFlush stdout
       setMark
     Line -> do
-      --            liftIO $ putStrLn "line"
-      --            liftIO $ hFlush stdout
+      when printTrace $ do
+        liftIO $ putStrLn "line"
+        liftIO $ hFlush stdout
       draw
     RNA.Fill -> do
-      --            liftIO $ putStrLn "fill"
-      --            liftIO $ hFlush stdout
+      when printTrace $ do
+        liftIO $ putStrLn "fill"
+        liftIO $ hFlush stdout
       tryFill
     AddBitmap -> do
-      --            liftIO $ putStrLn "addBitmap"
-      --            liftIO $ hFlush stdout
+      when printTrace $ do
+        liftIO $ putStrLn "addBitmap"
+        liftIO $ hFlush stdout
       addBitmap
     Compose -> do
-      --            liftIO $ putStrLn "compose"
-      --            liftIO $ hFlush stdout
+      when printTrace $ do
+        liftIO $ putStrLn "compose"
+        liftIO $ hFlush stdout
       compose
     Clip -> do
-      --            liftIO $ putStrLn "clip"
-      --            liftIO $ hFlush stdout
+      when printTrace $ do
+        liftIO $ putStrLn "clip"
+        liftIO $ hFlush stdout
       clip
     OtherRNA -> return ()
   incIteration
