@@ -313,7 +313,6 @@ void RNAprocessor::compose()
         }
     }
     delete bitmaps.takeFirst();
-    bitmaps.pop_front();
     img0 = bitmaps.first();
     updateImage(img0);
 }
@@ -339,7 +338,6 @@ void RNAprocessor::clip()
         }
     }
     delete bitmaps.takeFirst();
-    bitmaps.pop_front();
     img0 = bitmaps.first();
     updateImage(img0);
 }
