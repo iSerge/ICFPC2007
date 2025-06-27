@@ -50,7 +50,7 @@ readRNA file = do
 turnCW :: StateT ProcState IO ()
 turnCW = do
   s <- get
-  case (dir s) of
+  case dir s of
     N -> put s{dir = E}
     E -> put s{dir = S}
     S -> put s{dir = W}
@@ -59,7 +59,7 @@ turnCW = do
 turnCCW :: StateT ProcState IO ()
 turnCCW = do
   s <- get
-  case (dir s) of
+  case dir s of
     N -> put s{dir = W}
     E -> put s{dir = N}
     S -> put s{dir = E}
@@ -69,7 +69,7 @@ move :: StateT ProcState IO ()
 move = do
   s <- get
   let p = pos s in
-    case (dir s) of
+    case dir s of
       N -> if snd p == 0 then put s{pos = (fst p, 599)} else put s{pos = (fst p, snd p - 1)}
       E -> if fst p == 599 then put s{pos = (0, snd p)} else put s{pos = (fst p + 1, snd p)}
       S -> if snd p == 599 then put s{pos = (fst p, 0)} else put s{pos = (fst p, snd p + 1)}
@@ -92,9 +92,7 @@ clearBucket = do
   put s{bucket = [], currPix = (0,0,0,255)}
 
 currentPixelS :: StateT ProcState IO Pixel
-currentPixelS = do
-  s <- get
-  return $ currPix s
+currentPixelS = gets currPix
 
 addBitmap :: StateT ProcState IO ()
 addBitmap = do
@@ -140,7 +138,7 @@ draw = do
        c = if (deltax * deltay) <= 0 then 1 else 2
        x = (px * d) + ((d - c) `div` 2)
        y = (py * d) + ((d - c) `div` 2)
-       lineIter = \x y i -> unless (i == 0) $
+       lineIter x y i = unless (i == 0) $
                  do
                    setPixel (x `div` d, y `div` d)
                    lineIter (x + deltax) (y + deltay) (i - 1)
@@ -190,13 +188,13 @@ composeFunc :: Pixel -> Pixel -> Pixel
 composeFunc pix0 pix1 = (f r0 r1 , f g0 g1, f b0 b1, f a0 a1) where
   (r0, g0, b0, a0) = pix0
   (r1, g1, b1, a1) = pix1
-  f = \c0 c1 -> c0 + ((c1 * (255 - a0)) `div` 255)
+  f c0 c1 = c0 + ((c1 * (255 - a0)) `div` 255)
 
 clipFunc :: Pixel -> Pixel -> Pixel
 clipFunc pix0 pix1 = (f r1 , f g1, f b1, f a1) where
   (r0, g0, b0, a0) = pix0
   (r1, g1, b1, a1) = pix1
-  f = \c1 -> (c1 * a0) `div` 255
+  f c1 = (c1 * a0) `div` 255
 
 pixelTransform :: (Pixel -> Pixel -> Pixel) -> Bitmap -> Bitmap -> Position -> StateT ProcState IO ()
 pixelTransform f b0 b1 pos = do
@@ -231,7 +229,7 @@ bitmapProcess f = do
       in do
         mapM_ (pixelTransform f b0 b1) $ range bitmapBounds
         --proc_i $ range bitmapBounds
-        put s{bitmaps = tail bb}
+        put s{bitmaps = drop 1 bb}
 
 compose = bitmapProcess composeFunc
 
