@@ -268,11 +268,17 @@ drawPixmap p = do
   setSourcePixbuf p 0 0
   paint
 
+clearState :: StateT ProcState IO ()
+clearState = do
+  put initState
+  b <- liftIO $ transparentBitmap
+  modify' $ \s -> s {bitmaps = [b]}
+
 startRNAProc [] = return ()
 startRNAProc (file : files) = do
+  clearState
   liftIO $ putStrLn $ "Processing file: " ++ file
   rna <- liftIO $ readRNA file
-  addBitmap
   processRNA rna
   bb <- gets bitmaps
   case bb of
