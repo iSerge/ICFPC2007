@@ -19,18 +19,22 @@ where
 import Color
 import Control.DeepSeq
 import Control.Monad
+import Control.Monad.Loops
 import Control.Monad.State
 import Data.Array.MArray
 import Data.Word
 import Direction
 import GHC.Float
-import Graphics.Rendering.Cairo hiding (clip)
+import Graphics.Rendering.Cairo hiding (clip, fill)
 import Graphics.UI.Gtk hiding (Bitmap, get)
 import RNA
+import System.Directory
 import System.Environment
 import System.IO
 
 printTrace = False
+
+interactiveDraw = True
 
 data ProcState = ProcState
   { bucket :: !Bucket,
@@ -39,10 +43,16 @@ data ProcState = ProcState
     mark :: !(Int, Int),
     dir :: !Direction,
     bitmaps :: ![Bitmap],
-    iteration :: !Integer
+    iteration :: !Integer,
+    image :: !Image,
+    needImageUpdate :: Bool
   } -- deriving (Show)
 
-initState = ProcState [] (0, 0, 0, 255) (0, 0) (0, 0) E [] 0
+initState image = do
+  bitmap <- transparentBitmap
+  return $ ProcState [] (0, 0, 0, 255) (0, 0) (0, 0) E [bitmap] 0 image False
+
+invalidateImage v s = s {needImageUpdate = v}
 
 readRNA :: String -> IO RNA
 readRNA file = do
@@ -135,13 +145,12 @@ setPixel pos = do
     _ -> return ()
 
 draw = do
-  s <- get
-  let (px, py) = pos s
-      (mx, my) = mark s
-      deltax = mx - px
+  (px, py) <- gets pos
+  (mx, my) <- gets mark
+  let deltax = mx - px
       deltay = my - py
       d = max (abs deltax) (abs deltay)
-      c = if (deltax * deltay) <= 0 then 1 else 2
+      c = if (deltax * deltay) <= 0 then 1 else 0
       x = (px * d) + ((d - c) `div` 2)
       y = (py * d) + ((d - c) `div` 2)
       lineIter x y i = unless (i == 0) $
@@ -155,12 +164,21 @@ draw = do
   setPixel (mx, my)
 
 tryFill = do
-  s <- get
   new <- currentPixelS
-  let p = pos s
-  -- bitmap = head $ bitmaps s
+  p <- gets pos
   old <- getPixel p
-  when (new /= old) $ fillIter old [p]
+  -- when (new /= old) $ fillIter old [p]
+  when (new /= old) $ fill p old
+
+fill :: Position -> Pixel -> StateT ProcState IO ()
+fill pos@(x, y) initial = do
+  pix <- getPixel pos
+  when (pix == initial) $ do
+    setPixel pos
+    when (x > 0) $ fill (x - 1, y) initial
+    when (x < 599) $ fill (x + 1, y) initial
+    when (y > 0) $ fill (x, y - 1) initial
+    when (y < 599) $ fill (x, y + 1) initial
 
 fillIter :: Pixel -> [Position] -> StateT ProcState IO ()
 fillIter initial [] = return ()
@@ -268,15 +286,10 @@ drawPixmap p = do
   setSourcePixbuf p 0 0
   paint
 
-clearState :: StateT ProcState IO ()
-clearState = do
-  put initState
-  b <- liftIO $ transparentBitmap
-  modify' $ \s -> s {bitmaps = [b]}
-
-startRNAProc [] = return ()
-startRNAProc (file : files) = do
-  clearState
+startRNAProc image [] = return ()
+startRNAProc image (file : files) = do
+  startSt <- liftIO $ initState image
+  put startSt
   liftIO $ putStrLn $ "Processing file: " ++ file
   rna <- liftIO $ readRNA file
   processRNA rna
@@ -284,7 +297,7 @@ startRNAProc (file : files) = do
   case bb of
     (b : _) -> liftIO $ savePixmap b file
     _ -> return ()
-  startRNAProc files
+  startRNAProc image files
 
 processRNA :: RNA -> StateT ProcState IO ()
 processRNA [] = return ()
@@ -326,53 +339,90 @@ processRNA (op : rna) = do
         liftIO $ putStrLn "line"
         liftIO $ hFlush stdout
       draw
+      modify $ invalidateImage True
     RNA.Fill -> do
       when printTrace $ do
         liftIO $ putStrLn "fill"
         liftIO $ hFlush stdout
       tryFill
+      modify $ invalidateImage True
     AddBitmap -> do
       when printTrace $ do
         liftIO $ putStrLn "addBitmap"
         liftIO $ hFlush stdout
       addBitmap
+      modify $ invalidateImage True
     Compose -> do
       when printTrace $ do
         liftIO $ putStrLn "compose"
         liftIO $ hFlush stdout
       compose
+      modify $ invalidateImage True
     Clip -> do
       when printTrace $ do
         liftIO $ putStrLn "clip"
         liftIO $ hFlush stdout
       clip
+      modify $ invalidateImage True
     OtherRNA -> return ()
   incIteration
+  needUpdate <- gets needImageUpdate
+  when (interactiveDraw && needUpdate) $ do
+    modify $ invalidateImage False
+    image <- gets image
+    bb <- gets bitmaps
+    liftIO $ do
+      case bb of
+        (b : _) -> do
+          pixbuf <- getPixbuf b
+          imageSetFromPixbuf image pixbuf
+        _ -> return ()
+      whileM haveEvents $ mainIterationDo False
+      return ()
   processRNA rna
 
+haveEvents = do
+  n <- eventsPending
+  return (n > 0)
+
 main = do
+  dir <- getCurrentDirectory
+  putStrLn $ "Current dir: " ++ dir
   args <- getArgs
   initGUI
-  -- rna <- readRNA "../../test/selfcheck.dna"
-  runStateT (startRNAProc args) initState
-
-{-
-main = do
-  rna <- readRNA "../../test/selfcheck.dna"
-  initGUI
-  window <- windowNew
-  vbox    <- vBoxNew True 10
-  startBtn <- buttonNewWithLabel "Start processing"
-  set window [windowDefaultWidth := 200,
-              windowDefaultHeight := 200,
-              containerChild := vbox,
-              windowTitle := "RNA processor"]
-  boxPackStart vbox startBtn PackGrow 0
-  onClicked startBtn (processRNA rna)
-  onDestroy window mainQuit
-  widgetShowAll window
-  mainGUI
--}
+  unless interactiveDraw $ do
+    initGUI
+    image <- imageNew
+    startSt <- initState image
+    evalStateT (startRNAProc image args) startSt
+  when interactiveDraw $ do
+    window <- windowNew
+    pbuf <- pixbufNew ColorspaceRgb False 8 600 600
+    pixbufFill pbuf 0 0 0 255
+    image <- imageNewFromPixbuf pbuf
+    vbox <- vBoxNew True 10
+    startBtn <- buttonNewWithLabel "Start processing"
+    set
+      window
+      [ windowDefaultWidth := 200,
+        windowDefaultHeight := 200,
+        containerChild := vbox,
+        windowTitle := "RNA processor"
+      ]
+    boxPackStart vbox startBtn PackRepel 0
+    boxPackEnd vbox image PackGrow 1
+    startSt <- initState image
+    onClicked
+      startBtn
+      ( do
+          widgetSetSensitive startBtn False
+          whileM haveEvents $ mainIterationDo False
+          evalStateT (startRNAProc image args) startSt
+          widgetSetSensitive startBtn True
+      )
+    onDestroy window mainQuit
+    widgetShowAll window
+    mainGUI
 
 -- while (gtk_events_pending ())
 --  gtk_main_iteration ();

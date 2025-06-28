@@ -24,7 +24,7 @@ executable RNAProcessor
   main-is: Main.hs
   buildable: True
   build-depends: array -any, base -any, cairo -any, deepseq -any,
-               gtk -any, mtl -any
+               monad-loops -any, gtk -any, mtl -any, directory -any
   cpp-options:
   cc-options:
   ld-options:
