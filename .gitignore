@@ -1,3 +1,4 @@
 # cabal service directory
 results/
 build/
+CMakeLists.txt.user
