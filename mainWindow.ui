@@ -33,25 +33,11 @@
             <property name="visible">True</property>
             <property name="can-focus">True</property>
             <property name="receives-default">True</property>
+            <property name="valign">center</property>
           </object>
           <packing>
             <property name="left-attach">0</property>
             <property name="top-attach">0</property>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkTextView" id="controlTerm">
-            <property name="height-request">150</property>
-            <property name="visible">True</property>
-            <property name="can-focus">True</property>
-            <property name="border-width">1</property>
-            <property name="input-purpose">terminal</property>
-            <property name="monospace">True</property>
-          </object>
-          <packing>
-            <property name="left-attach">0</property>
-            <property name="top-attach">6</property>
-            <property name="width">3</property>
           </packing>
         </child>
         <child>
@@ -72,6 +58,7 @@
             <property name="visible">True</property>
             <property name="can-focus">True</property>
             <property name="receives-default">True</property>
+            <property name="valign">center</property>
           </object>
           <packing>
             <property name="left-attach">0</property>
@@ -85,6 +72,7 @@
             <property name="visible">True</property>
             <property name="can-focus">True</property>
             <property name="receives-default">True</property>
+            <property name="valign">center</property>
           </object>
           <packing>
             <property name="left-attach">0</property>
@@ -98,6 +86,7 @@
             <property name="visible">True</property>
             <property name="can-focus">True</property>
             <property name="receives-default">True</property>
+            <property name="valign">center</property>
           </object>
           <packing>
             <property name="left-attach">0</property>
@@ -151,6 +140,32 @@
             <property name="left-attach">0</property>
             <property name="top-attach">1</property>
             <property name="width">2</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkScrolledWindow" id="controlTermScroller">
+            <property name="height-request">200</property>
+            <property name="visible">True</property>
+            <property name="can-focus">True</property>
+            <property name="hexpand">True</property>
+            <property name="shadow-type">in</property>
+            <child>
+              <object class="GtkTextView" id="controlTerm">
+                <property name="height-request">250</property>
+                <property name="visible">True</property>
+                <property name="can-focus">True</property>
+                <property name="border-width">1</property>
+                <property name="hscroll-policy">natural</property>
+                <property name="vscroll-policy">natural</property>
+                <property name="input-purpose">terminal</property>
+                <property name="monospace">True</property>
+              </object>
+            </child>
+          </object>
+          <packing>
+            <property name="left-attach">0</property>
+            <property name="top-attach">6</property>
+            <property name="width">3</property>
           </packing>
         </child>
         <child>
