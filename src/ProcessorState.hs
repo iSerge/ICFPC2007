@@ -1,24 +1,31 @@
-module ProcessorState where
+module ProcessorState
+  ( PItem (..),
+    Pattern,
+    emptyPattern,
+    pat2String,
+    TItem (..),
+    Template,
+    emptyTemplate,
+    tpl2String,
+  )
+where
 
 import DNA
-import qualified Data.Sequence as S
-import Control.Monad
-import Control.Monad.State
 import qualified Data.Foldable as F
+import qualified Data.Sequence as S
 
 data PItem = Pi Base | LParen | RParen | Skip Integer | Search DNA
   deriving (Eq, Show)
 
-type RNA = S.Seq DNA
-
-rna2String :: RNA -> String
-rna2String = F.foldl (\a b -> a ++ dna2String b) ""
-
 type Pattern = S.Seq PItem
+
+emptyPattern :: Pattern
+emptyPattern = S.empty
 
 pat2String :: Pattern -> String
 pat2String = F.foldl' (flip $ flip (++) . pItem2String) ""
 
+pItem2String :: PItem -> [Char]
 pItem2String (Pi b) = [base2Char b]
 pItem2String LParen = "("
 pItem2String RParen = ")"
@@ -30,9 +37,13 @@ data TItem = Ti Base | Protected Integer Integer | LengthOf Integer
 
 type Template = S.Seq TItem
 
-tpl2String :: Template -> String
-tpl2String= F.foldl' (flip $ flip (++) . tItem2String) ""
+emptyTemplate :: Template
+emptyTemplate = S.empty
 
-tItem2String (Ti b)          = [base2Char b]
+tpl2String :: Template -> String
+tpl2String = F.foldl' (flip $ flip (++) . tItem2String) ""
+
+tItem2String :: TItem -> [Char]
+tItem2String (Ti b) = [base2Char b]
 tItem2String (Protected n l) = "[" ++ show n ++ "^" ++ show l ++ "]"
-tItem2String (LengthOf n)    = "|" ++ show n ++ "|"
+tItem2String (LengthOf n) = "|" ++ show n ++ "|"

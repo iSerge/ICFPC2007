@@ -1,4 +1,6 @@
 # cabal service directory
 results/
 build/
+.stack-work/
 CMakeLists.txt.user
+*.ui~

@@ -1,0 +1,101 @@
+cabal-version: 2.2
+
+-- This file has been generated from package.yaml by hpack version 0.37.0.
+--
+-- see: https://github.com/sol/hpack
+
+name:           DNAExplorer
+version:        0.1.0.0
+description:    Please see the README on GitHub at <https://github.com/iSerge/ICFPC2007#readme>
+homepage:       https://github.com/githubuser/DNAExplorer#readme
+bug-reports:    https://github.com/githubuser/DNAExplorer/issues
+author:         Serge Ivanov
+maintainer:     lutvuk@gmail.com
+copyright:      2025 Serge Ivanov
+license:        BSD-3-Clause
+build-type:     Simple
+data-files:
+    mainWindow.ui
+    endo.dna
+
+source-repository head
+  type: git
+  location: https://github.com/githubuser/DNAExplorer
+
+library
+  exposed-modules:
+      Color
+      Direction
+      DNA
+      DNAByteStr
+      DNAProcessor
+      DNASeq
+      GUI
+      ProcessorState
+      RNA
+      RNAprocessor
+  other-modules:
+      Paths_DNAExplorer
+  autogen-modules:
+      Paths_DNAExplorer
+  hs-source-dirs:
+      src
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
+  build-depends:
+      array
+    , base >=4.20 && <5
+    , bytestring
+    , cairo
+    , containers
+    , deepseq
+    , gtk3
+    , monad-loops
+    , mtl
+  default-language: Haskell2010
+
+executable DNAExplorer-exe
+  main-is: Main.hs
+  other-modules:
+      Paths_DNAExplorer
+  autogen-modules:
+      Paths_DNAExplorer
+  hs-source-dirs:
+      app
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      DNAExplorer
+    , array
+    , base >=4.20 && <5
+    , bytestring
+    , cairo
+    , containers
+    , deepseq
+    , gtk3
+    , monad-loops
+    , mtl
+  default-language: Haskell2010
+
+test-suite DNAExplorer-test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      TestDNA
+      TestDraw
+      Paths_DNAExplorer
+  autogen-modules:
+      Paths_DNAExplorer
+  hs-source-dirs:
+      test
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      DNAExplorer
+    , array
+    , base >=4.20 && <5
+    , bytestring
+    , cairo
+    , containers
+    , deepseq
+    , gtk3
+    , monad-loops
+    , mtl
+  default-language: Haskell2010

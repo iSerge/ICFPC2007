@@ -11,47 +11,42 @@
 
 -----------------------------------------------------------------------------
 
-module Main
-  ( main,
-  )
-where
+module RNAprocessor (initRnaProcessor, readRNA, rnaIter, RnaProcSt(..), savePixmap, updateImage) where
 
 import Color
 import Control.DeepSeq
 import Control.Monad
-import Control.Monad.Loops
-import Control.Monad.State
+import Control.Monad.State.Strict
 import Data.Array.MArray
 import Data.Word
 import Direction
-import GHC.Float
-import Graphics.Rendering.Cairo hiding (clip, fill)
-import Graphics.UI.Gtk hiding (Bitmap, get)
+import Graphics.Rendering.Cairo hiding (clip, fill, x, y)
+import Graphics.UI.Gtk hiding (draw, get)
 import RNA
-import System.Directory
-import System.Environment
 import System.IO
 
+printTrace :: Bool
 printTrace = False
 
-interactiveDraw = True
-
-data ProcState = ProcState
+data RnaProcSt = RnaProcSt
   { bucket :: !Bucket,
     currPix :: !Pixel,
     pos :: !(Int, Int),
     mark :: !(Int, Int),
     dir :: !Direction,
     bitmaps :: ![Bitmap],
-    iteration :: !Integer,
+    rnaIteration :: !Integer,
     image :: !Image,
-    needImageUpdate :: Bool
+    needImageUpdate :: Bool,
+    interactiveRender :: Bool
   } -- deriving (Show)
 
-initState image = do
+initRnaProcessor :: Image -> Bool -> IO RnaProcSt
+initRnaProcessor img interactive = do
   bitmap <- transparentBitmap
-  return $ ProcState [] (0, 0, 0, 255) (0, 0) (0, 0) E [bitmap] 0 image False
+  return $ RnaProcSt [] (0, 0, 0, 255) (0, 0) (0, 0) E [bitmap] 0 img False interactive
 
+invalidateImage :: Bool -> RnaProcSt -> RnaProcSt
 invalidateImage v s = s {needImageUpdate = v}
 
 readRNA :: String -> IO RNA
@@ -59,7 +54,7 @@ readRNA file = do
   str <- readFile file
   return $ parseRNA str
 
-turnCW :: StateT ProcState IO ()
+turnCW :: StateT RnaProcSt IO ()
 turnCW = do
   s <- get
   case dir s of
@@ -68,7 +63,7 @@ turnCW = do
     S -> put s {dir = W}
     W -> put s {dir = N}
 
-turnCCW :: StateT ProcState IO ()
+turnCCW :: StateT RnaProcSt IO ()
 turnCCW = do
   s <- get
   case dir s of
@@ -77,7 +72,7 @@ turnCCW = do
     S -> put s {dir = E}
     W -> put s {dir = S}
 
-move :: StateT ProcState IO ()
+move :: StateT RnaProcSt IO ()
 move = do
   s <- get
   let p = pos s
@@ -87,26 +82,26 @@ move = do
         S -> if snd p == 599 then put s {pos = (fst p, 0)} else put s {pos = (fst p, snd p + 1)}
         W -> if fst p == 0 then put s {pos = (599, snd p)} else put s {pos = (fst p - 1, snd p)}
 
-setMark :: StateT ProcState IO ()
+setMark :: StateT RnaProcSt IO ()
 setMark = do
   s <- get
   put s {mark = pos s}
 
-addColor :: Color.Color -> StateT ProcState IO ()
+addColor :: Color.Color -> StateT RnaProcSt IO ()
 addColor c = do
   s <- get
   let b = bucket s
    in put s {bucket = c : b, currPix = currentPixel (c : b)}
 
-clearBucket :: StateT ProcState IO ()
+clearBucket :: StateT RnaProcSt IO ()
 clearBucket = do
   s <- get
   put s {bucket = [], currPix = (0, 0, 0, 255)}
 
-currentPixelS :: StateT ProcState IO Pixel
+currentPixelS :: StateT RnaProcSt IO Pixel
 currentPixelS = gets currPix
 
-addBitmap :: StateT ProcState IO ()
+addBitmap :: StateT RnaProcSt IO ()
 addBitmap = do
   s <- get
   when (length (bitmaps s) < 10) $
@@ -123,16 +118,17 @@ setP bitmap pos pixel =
     in array bitmapBounds [(i, f i) | i <- range bitmapBounds]
 -}
 
-getPixel :: Position -> StateT ProcState IO Pixel
-getPixel pos = do
+getPixel :: Position -> StateT RnaProcSt IO Pixel
+getPixel position = do
   bb <- gets bitmaps
   case bb of
     (b : _) -> do
-      pixel <- liftIO $ readPixel b pos
+      pixel <- liftIO $ readPixel b position
       pixel `deepseq` return pixel
     _ -> return (0, 0, 0, 0)
 
-setPixel pos = do
+setPixel :: Position -> StateT RnaProcSt IO ()
+setPixel position = do
   -- when printTrace $
   --   liftIO $
   --     putStrLn ("setPixel " ++ show pos)
@@ -140,10 +136,11 @@ setPixel pos = do
   case bb of
     (b : _) -> do
       p <- currentPixelS
-      r <- liftIO $ writePixel b pos p
+      r <- liftIO $ writePixel b position p
       r `deepseq` return ()
     _ -> return ()
 
+draw :: StateT RnaProcSt IO ()
 draw = do
   (px, py) <- gets pos
   (mx, my) <- gets mark
@@ -153,35 +150,37 @@ draw = do
       c = if (deltax * deltay) <= 0 then 1 else 0
       x = (px * d) + ((d - c) `div` 2)
       y = (py * d) + ((d - c) `div` 2)
-      lineIter x y i = unless (i == 0) $
+      lineIter x' y' i = unless (i == 0) $
         do
-          setPixel (x `div` d, y `div` d)
-          lineIter (x + deltax) (y + deltay) (i - 1)
+          setPixel (x' `div` d, y' `div` d)
+          lineIter (x' + deltax) (y' + deltay) (i - 1)
   when printTrace $ do
     liftIO $ putStrLn ("pos " ++ show (px, py))
     liftIO $ putStrLn ("mark " ++ show (mx, my))
   lineIter x y d
   setPixel (mx, my)
 
+tryFill :: StateT RnaProcSt IO ()
 tryFill = do
   new <- currentPixelS
   p <- gets pos
   old <- getPixel p
-  -- when (new /= old) $ fillIter old [p]
-  when (new /= old) $ fill p old
+  when (new /= old) $ fillIter old [p]
 
-fill :: Position -> Pixel -> StateT ProcState IO ()
-fill pos@(x, y) initial = do
-  pix <- getPixel pos
-  when (pix == initial) $ do
-    setPixel pos
-    when (x > 0) $ fill (x - 1, y) initial
-    when (x < 599) $ fill (x + 1, y) initial
-    when (y > 0) $ fill (x, y - 1) initial
-    when (y < 599) $ fill (x, y + 1) initial
+-- when (new /= old) $ fill p old
 
-fillIter :: Pixel -> [Position] -> StateT ProcState IO ()
-fillIter initial [] = return ()
+-- fill :: Position -> Pixel -> StateT RnaProcSt IO ()
+-- fill position@(x, y) initial = do
+--   pix <- getPixel position
+--   when (pix == initial) $ do
+--     setPixel position
+--     when (x > 0) $ fill (x - 1, y) initial
+--     when (x < 599) $ fill (x + 1, y) initial
+--     when (y > 0) $ fill (x, y - 1) initial
+--     when (y < 599) $ fill (x, y + 1) initial
+
+fillIter :: Pixel -> [Position] -> StateT RnaProcSt IO ()
+fillIter _ [] = return ()
 fillIter initial (p : ps) = do
   pix <- getPixel p
   psN <-
@@ -220,18 +219,19 @@ composeFunc pix0 pix1 = (f r0 r1, f g0 g1, f b0 b1, f a0 a1)
 clipFunc :: Pixel -> Pixel -> Pixel
 clipFunc pix0 pix1 = (f r1, f g1, f b1, f a1)
   where
-    (r0, g0, b0, a0) = pix0
+    (_, _, _, a0) = pix0
     (r1, g1, b1, a1) = pix1
     f c1 = (c1 * a0) `div` 255
 
-pixelTransform :: (Pixel -> Pixel -> Pixel) -> Bitmap -> Bitmap -> Position -> StateT ProcState IO ()
-pixelTransform f b0 b1 pos = do
-  p0 <- liftIO $ readPixel b0 pos
-  p1 <- liftIO $ readPixel b1 pos
+pixelTransform :: (Pixel -> Pixel -> Pixel) -> Bitmap -> Bitmap -> Position -> StateT RnaProcSt IO ()
+pixelTransform f b0 b1 position = do
+  p0 <- liftIO $ readPixel b0 position
+  p1 <- liftIO $ readPixel b1 position
   let newPix = f p0 p1
-  r <- newPix `deepseq` liftIO $ writePixel b1 pos newPix
+  r <- newPix `deepseq` liftIO $ writePixel b1 position newPix
   r `deepseq` return ()
 
+bitmapProcess :: (Pixel -> Pixel -> Pixel) -> StateT RnaProcSt IO ()
 bitmapProcess f = do
   bb <- gets bitmaps
   case bb of
@@ -240,19 +240,23 @@ bitmapProcess f = do
       modify' (\s -> s {bitmaps = b1 : bs})
     _ -> return ()
 
+compose :: StateT RnaProcSt IO ()
 compose = bitmapProcess composeFunc
 
+clip :: StateT RnaProcSt IO ()
 clip = bitmapProcess clipFunc
 
-printIteration :: StateT ProcState IO ()
-printIteration = do
-  s <- get
-  liftIO $ putStrLn ("Iteration: " ++ show (iteration s))
+-- printIteration :: StateT RnaProcSt IO ()
+-- printIteration = do
+--   s <- get
+--   liftIO $ putStrLn ("Iteration: " ++ show (iteration s))
 
+incIteration :: StateT RnaProcSt IO ()
 incIteration = do
   s <- get
-  put s {iteration = 1 + iteration s}
+  put s {rnaIteration = 1 + rnaIteration s}
 
+savePixmap :: Bitmap -> [Char] -> IO ()
 savePixmap b file = do
   p <- getPixbuf b
   withImageSurface
@@ -265,7 +269,7 @@ savePixmap b file = do
     )
 
 getPixbuf :: Bitmap -> IO Pixbuf
-getPixbuf b = do
+getPixbuf bmap = do
   pbuf <- pixbufNew ColorspaceRgb False 8 600 600
   rowstride <- pixbufGetRowstride pbuf
   nChannels <- pixbufGetNChannels pbuf
@@ -273,7 +277,7 @@ getPixbuf b = do
   let proc_i :: [(Int, Int)] -> IO ()
       proc_i [] = return ()
       proc_i ((x, y) : rng) = do
-        (r, g, b, a) <- liftIO $ readPixel b (x, y)
+        (r, g, b, _) <- liftIO $ readPixel bmap (x, y)
         let p = y * rowstride + x * nChannels
         res <- r `deepseq` writeArray pixels p $ fromInteger $ toInteger r
         res' <- res `deepseq` g `deepseq` writeArray pixels (p + 1) $ fromInteger $ toInteger g
@@ -282,26 +286,13 @@ getPixbuf b = do
   proc_i $ range bitmapBounds
   return pbuf
 
+drawPixmap :: Pixbuf -> Render ()
 drawPixmap p = do
   setSourcePixbuf p 0 0
   paint
 
-startRNAProc image [] = return ()
-startRNAProc image (file : files) = do
-  startSt <- liftIO $ initState image
-  put startSt
-  liftIO $ putStrLn $ "Processing file: " ++ file
-  rna <- liftIO $ readRNA file
-  processRNA rna
-  bb <- gets bitmaps
-  case bb of
-    (b : _) -> liftIO $ savePixmap b file
-    _ -> return ()
-  startRNAProc image files
-
-processRNA :: RNA -> StateT ProcState IO ()
-processRNA [] = return ()
-processRNA (op : rna) = do
+rnaIter :: RNAop -> StateT RnaProcSt IO ()
+rnaIter op = do
   --  printIteration
   case op of
     AddColor color -> do
@@ -367,64 +358,15 @@ processRNA (op : rna) = do
     OtherRNA -> return ()
   incIteration
   needUpdate <- gets needImageUpdate
+  interactiveDraw <- gets interactiveRender
   when (interactiveDraw && needUpdate) $ do
     modify $ invalidateImage False
-    image <- gets image
+    img <- gets image
     bb <- gets bitmaps
-    liftIO $ do
-      case bb of
-        (b : _) -> do
-          pixbuf <- getPixbuf b
-          imageSetFromPixbuf image pixbuf
-        _ -> return ()
-      whileM haveEvents $ mainIterationDo False
-      return ()
-  processRNA rna
+    liftIO $ updateImage img bb
 
-haveEvents = do
-  n <- eventsPending
-  return (n > 0)
-
-main = do
-  dir <- getCurrentDirectory
-  putStrLn $ "Current dir: " ++ dir
-  args <- getArgs
-  initGUI
-  unless interactiveDraw $ do
-    initGUI
-    image <- imageNew
-    startSt <- initState image
-    evalStateT (startRNAProc image args) startSt
-  when interactiveDraw $ do
-    window <- windowNew
-    pbuf <- pixbufNew ColorspaceRgb False 8 600 600
-    pixbufFill pbuf 0 0 0 255
-    image <- imageNewFromPixbuf pbuf
-    vbox <- vBoxNew True 10
-    startBtn <- buttonNewWithLabel "Start processing"
-    set
-      window
-      [ windowDefaultWidth := 200,
-        windowDefaultHeight := 200,
-        containerChild := vbox,
-        windowTitle := "RNA processor"
-      ]
-    boxPackStart vbox startBtn PackRepel 0
-    boxPackEnd vbox image PackGrow 1
-    startSt <- initState image
-    onClicked
-      startBtn
-      ( do
-          widgetSetSensitive startBtn False
-          whileM haveEvents $ mainIterationDo False
-          evalStateT (startRNAProc image args) startSt
-          widgetSetSensitive startBtn True
-      )
-    onDestroy window mainQuit
-    widgetShowAll window
-    mainGUI
-
--- while (gtk_events_pending ())
---  gtk_main_iteration ();
-
---  gtk_main_iteration_do (FALSE);
+updateImage :: Image -> [Bitmap] -> IO ()
+updateImage _ [] = return ()
+updateImage img (b : _) = postGUISync $ do
+  pixbuf <- getPixbuf b
+  imageSetFromPixbuf img pixbuf
