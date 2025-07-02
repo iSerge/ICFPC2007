@@ -28,6 +28,7 @@ library
       Direction
       DNA
       DNAByteStr
+      DNAops
       DNAProcessor
       DNASeq
       GUI
