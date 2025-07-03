@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainView</class>
+ <widget class="QDialog" name="MainView">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>986</width>
+    <height>612</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Save Endo interactive</string>
+  </property>
+  <layout class="QGridLayout" name="gridLayout_2">
+   <item row="4" column="0">
+    <widget class="QPushButton" name="processDnaBtn">
+     <property name="text">
+      <string>Process DNA</string>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="0">
+    <widget class="QPushButton" name="renderBtn">
+     <property name="text">
+      <string>Render RNA ...</string>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="0">
+    <layout class="QHBoxLayout" name="horizontalLayout">
+     <item>
+      <widget class="QRadioButton" name="msecBtn">
+       <property name="text">
+        <string>Millisecond</string>
+       </property>
+       <attribute name="buttonGroup">
+        <string notr="true">renderDelayGroup</string>
+       </attribute>
+      </widget>
+     </item>
+     <item>
+      <widget class="QRadioButton" name="usecBtn">
+       <property name="text">
+        <string>Microsecond</string>
+       </property>
+       <attribute name="buttonGroup">
+        <string notr="true">renderDelayGroup</string>
+       </attribute>
+      </widget>
+     </item>
+     <item>
+      <widget class="QRadioButton" name="fastBtn">
+       <property name="text">
+        <string>No delay</string>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
+       <attribute name="buttonGroup">
+        <string notr="true">renderDelayGroup</string>
+       </attribute>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item row="1" column="0">
+    <widget class="QTreeView" name="prefixView">
+     <property name="alternatingRowColors">
+      <bool>true</bool>
+     </property>
+     <attribute name="headerDefaultSectionSize">
+      <number>200</number>
+     </attribute>
+    </widget>
+   </item>
+   <item row="5" column="0">
+    <widget class="QLabel" name="iterationLbl">
+     <property name="text">
+      <string notr="true">Iteration: </string>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="1" rowspan="6">
+    <widget class="QLabel" name="renderView">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>600</width>
+       <height>600</height>
+      </size>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">background-color: black;</string>
+     </property>
+     <property name="text">
+      <string notr="true"/>
+     </property>
+     <property name="scaledContents">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+ <buttongroups>
+  <buttongroup name="renderDelayGroup"/>
+ </buttongroups>
+</ui>

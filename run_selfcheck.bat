@@ -1,0 +1,1 @@
+DNAProcessor endo.dna IIPIFFCPICICIICPIICIPPPICIIC >results\selfcheck.rna

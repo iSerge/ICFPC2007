@@ -1,0 +1,75 @@
+name:                DNAExplorer
+version:             0.1.0.0
+github:              "githubuser/DNAExplorer"
+license:             BSD-3-Clause
+author:              "Serge Ivanov"
+maintainer:          "lutvuk@gmail.com"
+copyright:           "2025 Serge Ivanov"
+
+# extra-source-files:
+# - README.md
+# - CHANGELOG.md
+
+data-files:
+- mainWindow.ui
+- endo.dna
+
+# Metadata used when publishing your package
+# synopsis:            Short description of your package
+# category:            Web
+
+# To avoid duplicated efforts in documentation and dealing with the
+# complications of embedding Haddock markup inside cabal files, it is
+# common to point users to the README.md file.
+description:         Please see the README on GitHub at <https://github.com/iSerge/ICFPC2007#readme>
+
+dependencies:
+- base >= 4.20 && < 5
+- gtk3
+- cairo
+- array
+- deepseq
+- monad-loops
+- array
+- mtl
+- containers
+- bytestring
+
+ghc-options:
+- -Wall
+- -Wcompat
+- -Widentities
+- -Wincomplete-record-updates
+- -Wincomplete-uni-patterns
+- -Wmissing-export-lists
+- -Wmissing-home-modules
+- -Wpartial-fields
+- -Wredundant-constraints
+#- -fforce-recomp
+#- -ddump-stg
+#- -dsuppress-all
+
+library:
+  source-dirs: src
+
+executables:
+  DNAExplorer-exe:
+    main:                Main.hs
+    source-dirs:         app
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - DNAExplorer
+
+tests:
+  DNAExplorer-test:
+    main:                Spec.hs
+    source-dirs:         test
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - DNAExplorer

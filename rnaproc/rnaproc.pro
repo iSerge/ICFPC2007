@@ -1,7 +1,7 @@
 # -------------------------------------------------
 # Project created by QtCreator 2010-02-10T13:45:15
 # -------------------------------------------------
-#QT -= gui
+QT += gui widgets
 TARGET = rnaproc
 CONFIG += console
 #CONFIG -= app_bundle
