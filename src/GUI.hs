@@ -23,7 +23,7 @@ data Ui = Ui
     saveRnaBtn :: Button,
     statusBar :: Statusbar,
     interactiveRenderCB :: CheckButton,
-    prefixField :: TextView
+    prefixField :: Entry
   }
 
 stateTLens :: (Monad m) => (a -> b) -> (b -> a -> a) -> StateT b m d -> StateT a m d
@@ -79,7 +79,7 @@ createControls = do
     mapM
       (builderGetObject builder castToButton)
       ["processRNABtn", "processDNABtn", "saveImgBtn", "saveRNABtn"]
-  prefixV <- builderGetObject builder castToTextView "prefixView"
+  prefixV <- builderGetObject builder castToEntry "prefixView"
   return
     Ui
       { mainWindow = mainWnd,
@@ -140,10 +140,7 @@ setupGUI = do
     return ()
   _ <- processDnaBtn u `on` buttonActivated $ do
     interactive <- toggleButtonGetActive $ interactiveRenderCB u
-    prefixBuffer <- textViewGetBuffer $ prefixField u
-    start <- textBufferGetStartIter prefixBuffer
-    end <- textBufferGetEndIter prefixBuffer
-    prefixStr <- textBufferGetText prefixBuffer start end False
+    prefixStr <- entryGetText $ prefixField u
     putStrLn ("Prefix: " ++ prefixStr)
     dnaFile <- getDataFileName "endo.dna"
     dnaStr <- readFile dnaFile
