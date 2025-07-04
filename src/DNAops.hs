@@ -1,6 +1,39 @@
-module DNAops (repairManualPage) where
+{-# LANGUAGE BangPatterns #-}
+
+module DNAops (calcPrefix, repairManualPage) where
 
 import DNASeq
+import Text.Parsec
+
+calcPrefix :: String -> IO String
+calcPrefix p = do
+  actions <- parseProg p
+  let strictId !a = a
+  foldMap strictId actions
+
+parseProg :: String -> IO [IO String]
+parseProg p = case parse program "" p of
+  Left err -> print err >> return []
+  Right xs -> return xs
+
+program = sepEndBy expressions eol
+
+expressions = choice [manualPage]
+
+manualPage = do
+  _ <- string "repairManualPage"
+  spaces
+  repairManualPage <$> integer
+
+integer = do
+  digits <- many $ oneOf "1234567890"
+  return (read digits :: Int)
+
+eol = try (string "\n\r")
+      <|> try (string "\r\n")
+      <|> string "\n"
+      <|> string "\r"
+      <?> "end of line"
 
 nat :: Int -> String
 nat n = natIter n ""

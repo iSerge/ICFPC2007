@@ -8,6 +8,7 @@ import Control.Monad.Loops
 import Control.Monad.State.Strict as St
 import DNAProcessor
 import DNASeq
+import DNAops
 import Data.Sequence as S
 import Graphics.UI.Gtk
 import Paths_DNAExplorer (getDataFileName)
@@ -23,7 +24,8 @@ data Ui = Ui
     saveRnaBtn :: Button,
     statusBar :: Statusbar,
     interactiveRenderCB :: CheckButton,
-    prefixField :: Entry
+    prefixField :: Entry,
+    prefixProgram :: TextView
   }
 
 stateTLens :: (Monad m) => (a -> b) -> (b -> a -> a) -> StateT b m d -> StateT a m d
@@ -80,6 +82,7 @@ createControls = do
       (builderGetObject builder castToButton)
       ["processRNABtn", "processDNABtn", "saveImgBtn", "saveRNABtn"]
   prefixV <- builderGetObject builder castToEntry "prefixView"
+  prog <- builderGetObject builder castToTextView "controlTerm"
   return
     Ui
       { mainWindow = mainWnd,
@@ -90,7 +93,8 @@ createControls = do
         saveRnaBtn = sRna,
         statusBar = statusbar,
         interactiveRenderCB = interactiveCB,
-        prefixField = prefixV
+        prefixField = prefixV,
+        prefixProgram = prog
       }
 
 enableButtons :: Ui -> IO ()
@@ -144,6 +148,10 @@ setupGUI = do
     putStrLn ("Prefix: " ++ prefixStr)
     dnaFile <- getDataFileName "endo.dna"
     dnaStr <- readFile dnaFile
+    programStrBuf <- textViewGetBuffer $ prefixProgram u
+    start <- textBufferGetStartIter programStrBuf
+    end <- textBufferGetEndIter programStrBuf
+    programStr <- textBufferGetText programStrBuf start end False
     _ <-
       forkIO $ do
         let haveDNA :: StateT (DnaProcSt, RnaProcSt) IO Bool
@@ -165,7 +173,8 @@ setupGUI = do
           _ <- statusbarPush (statusBar u) statusCtxId "Processing DNA"
           disableButtons u
           clearImage (rnaView u)
-        dnaST <- initDnaProcessor (fromString (prefixStr ++ dnaStr))
+        programmedPrefix <- calcPrefix programStr
+        dnaST <- initDnaProcessor (fromString (prefixStr ++ programmedPrefix ++ dnaStr))
         rnaST <- initRnaProcessor (rnaView u) interactive
         (_, rnaST') <- flip execStateT (dnaST, rnaST) $ whileM_ haveDNA loop
         unless interactive $ updateImage (rnaView u) (bitmaps rnaST')

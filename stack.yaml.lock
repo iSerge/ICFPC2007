@@ -5,6 +5,20 @@
 
 packages:
 - completed:
+    hackage: Cabal-3.12.1.0@sha256:08be296ddd941b3f9be4bd125fbb3e6857f5c707b8d10464f6f1d30c91ca3e5f,13551
+    pantry-tree:
+      sha256: a509c8164a9682e2cbd080ef8446164fbe11a9c5c0f88b61f41094a8167e6a04
+      size: 11798
+  original:
+    hackage: Cabal-3.12.1.0
+- completed:
+    hackage: Cabal-syntax-3.12.1.0@sha256:6dbb06fb08ff77520947fb4c1ef281c9cea5b8dc7fd9a41ad62273fa916cf4b2,7407
+    pantry-tree:
+      sha256: 62e4b1bbdf7fe7d5259f45811e6fd0131823a10a8ec8c5eaf25370d444ac263a
+      size: 11051
+  original:
+    hackage: Cabal-syntax-3.12.1.0
+- completed:
     hackage: gtk3-0.15.10@sha256:4652b389674d3bcd1c3240e6dbd5a6d16a3b98b064f43df358dafe154bbbe187,19762
     pantry-tree:
       sha256: 432856274b5f9f55eb341aeb3696052dfca80b27bbf5e2bdc8f50a225fc06747
@@ -186,4 +200,11 @@ packages:
       size: 243
   original:
     hackage: monad-loops-0.4.3
+- completed:
+    hackage: parsec-3.1.18.0@sha256:dfbb9835b8abc966b6bbd34340ef5122227b4cf4480062b85ca4c4704f054f98,4535
+    pantry-tree:
+      sha256: 48ae1440eb8eb4fecde2a724c492e830ff2bec341117164302399b417733bf70
+      size: 2810
+  original:
+    hackage: parsec-3.1.18.0
 snapshots: []
