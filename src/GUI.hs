@@ -9,6 +9,7 @@ import Control.Monad.State.Strict as St
 import DNAProcessor
 import DNASeq
 import DNAops
+import Data.IORef
 import Data.Sequence as S
 import Graphics.UI.Gtk
 import Paths_DNAExplorer (getDataFileName)
@@ -45,12 +46,33 @@ chooseFile :: Window -> IO String
 chooseFile parentWindow = do
   dialog <-
     fileChooserDialogNew
-      ( Just $
-          "Demo of the standard dialog to select "
-            ++ "an existing file" -- dialog title
-      )
+      (Just "Choose RNA file to process") -- dialog title
       (Just parentWindow) -- the parent window
       FileChooserActionOpen -- the kind of dialog we want
+      [ ( "gtk-cancel", -- The buttons to display
+          ResponseCancel
+        ),
+        ( "gtk-open",
+          ResponseAccept
+        )
+      ]
+
+  widgetShow dialog
+  dlgResponse <- dialogRun dialog
+  widgetHide dialog
+  case dlgResponse of
+    ResponseAccept -> do
+      Just fileName <- fileChooserGetFilename dialog
+      return fileName
+    _ -> return ""
+
+chooseNewFile :: Window -> IO String
+chooseNewFile parentWindow = do
+  dialog <-
+    fileChooserDialogNew
+      (Just "Choose file to save") -- dialog title
+      (Just parentWindow) -- the parent window
+      FileChooserActionSave -- the kind of dialog we want
       [ ( "gtk-cancel", -- The buttons to display
           ResponseCancel
         ),
@@ -119,6 +141,9 @@ clearImage img = do
 
 setupGUI :: IO Ui
 setupGUI = do
+  fullRnaRef <- newIORef ""
+  emptyBitmap <- transparentBitmap
+  bitmapRef <- newIORef emptyBitmap
   u <- createControls
   clearImage (rnaView u)
   statusCtxId <- statusbarGetContextId (statusBar u) "Main status"
@@ -176,10 +201,22 @@ setupGUI = do
         programmedPrefix <- calcPrefix programStr
         dnaST <- initDnaProcessor (fromString (prefixStr ++ programmedPrefix ++ dnaStr))
         rnaST <- initRnaProcessor (rnaView u) interactive
-        (_, rnaST') <- flip execStateT (dnaST, rnaST) $ whileM_ haveDNA loop
+        (dnaST', rnaST') <- flip execStateT (dnaST, rnaST) $ whileM_ haveDNA loop
         unless interactive $ updateImage (rnaView u) (bitmaps rnaST')
+        case bitmaps rnaST of
+          (b : _) -> atomicWriteIORef bitmapRef b
+          _ -> do b <- transparentBitmap; atomicWriteIORef bitmapRef b
+        atomicWriteIORef fullRnaRef $ concat (getRnaFull dnaST')
         postGUISync $ do
           statusbarPop (statusBar u) statusCtxId
           enableButtons u
     return ()
+  _ <- saveRnaBtn u `on` buttonActivated $ do
+    fileName <- chooseNewFile (mainWindow u)
+    rna <- readIORef fullRnaRef
+    writeFile fileName rna
+  _ <- saveImageBtn u `on` buttonActivated $ do
+    fileName <- chooseNewFile (mainWindow u)
+    b <- readIORef bitmapRef
+    savePixmap b fileName
   return u

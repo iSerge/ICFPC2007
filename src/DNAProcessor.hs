@@ -1,6 +1,14 @@
 {-# LANGUAGE BangPatterns #-}
 
-module DNAProcessor (dnaIter, initDnaProcessor, DnaProcSt (..), template, matchreplace, pattern) where
+module DNAProcessor
+  ( dnaIter,
+    initDnaProcessor,
+    DnaProcSt (..),
+    template,
+    matchreplace,
+    pattern,
+  )
+where
 
 import Control.Monad
 import Control.Monad.State.Strict
@@ -14,11 +22,12 @@ import Prelude hiding (drop, length, reverse)
 data DnaProcSt = DnaProcSt
   { getRna :: !RNA,
     getDna :: !DNA,
+    getRnaFull :: !(S.Seq String),
     dnaIteration :: !Integer
   }
 
 initDnaProcessor :: DNA -> IO DnaProcSt
-initDnaProcessor dna = return $ DnaProcSt {getDna = dna, getRna = emptyRNA, dnaIteration = 0}
+initDnaProcessor dna = return $ DnaProcSt {getDna = dna, getRna = emptyRNA, dnaIteration = 0, getRnaFull = S.empty}
 
 type Environment = S.Seq DNA
 
@@ -67,8 +76,9 @@ putDna dna = modify (\s -> s {getDna = dna})
 getRnaOp :: StateT DnaProcSt IO RNAop
 getRnaOp = do
   dna <- gets getDna
-  let op = parseRnaOp (dna2String $ sect 0 7 dna)
-  modify (\s -> s {getRna = (getRna s) S.|> op})
+  let rnaStr = dna2String $ sect 0 7 dna
+  let op = parseRnaOp rnaStr
+  modify (\s -> s {getRna = (getRna s) S.|> op, getRnaFull = (getRnaFull s) S.|> rnaStr})
   putDna $ sectFrom 7 dna
   return op
 

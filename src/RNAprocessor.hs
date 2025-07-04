@@ -11,7 +11,16 @@
 
 -----------------------------------------------------------------------------
 
-module RNAprocessor (initRnaProcessor, readRNA, rnaIter, RnaProcSt(..), savePixmap, updateImage) where
+module RNAprocessor
+  ( initRnaProcessor,
+    readRNA,
+    rnaIter,
+    RnaProcSt (..),
+    savePixmap,
+    transparentBitmap,
+    updateImage,
+  )
+where
 
 import Color
 import Control.DeepSeq
@@ -256,7 +265,7 @@ incIteration = do
   s <- get
   put s {rnaIteration = 1 + rnaIteration s}
 
-savePixmap :: Bitmap -> [Char] -> IO ()
+savePixmap :: Bitmap -> FilePath -> IO ()
 savePixmap b file = do
   p <- getPixbuf b
   withImageSurface
@@ -265,7 +274,7 @@ savePixmap b file = do
     600
     ( \srf -> do
         renderWith srf (drawPixmap p)
-        surfaceWriteToPNG srf $ file ++ ".png"
+        surfaceWriteToPNG srf file
     )
 
 getPixbuf :: Bitmap -> IO Pixbuf
